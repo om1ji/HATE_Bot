@@ -155,7 +155,7 @@ def hash_artist(artist):
     splitted = artist.split('&')
     res = ''
     for sp in splitted:
-        res = res + '#' + sp.strip().replace(' ', '_') + ' '
+        res = res + '#' + sp.strip().replace('.', '_').replace(' ', '_') + ' '
     return res
 
 
@@ -204,7 +204,7 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    # name = "Deano - Curveball #4 (Luke Hess Remix) [SNG021D]-TplFo-vReBs..description"
+    # name = "D.Dan - Spilling Over [PX099]-FkdKAT_KXE4..description"
     # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
 
     dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
