@@ -67,11 +67,7 @@ def get_artist(name):
     if artist_raw == None:
         return "Unknown"
     artist = artist_raw.group(1).strip()
-    splitted = artist.split('&')
-    res = ''
-    for sp in splitted:
-        res = res + '#' + sp.strip().replace(' ', '_') + ' '
-    return res
+    return artist
 
 def get_title(name):
     title_raw = re.search(r"(?: - )(.+)(?:\[)", name)
@@ -96,12 +92,12 @@ def get_label(desc):
     label = re.sub(r'[\[\]\(\)]', '', label)
     return label
 
-def get_catalogue(desc):
+def get_catalogue(name):
     #Catalogue
-    catalogue_raw = re.search(r"(?<=Catalogue: ).*|(?<=Release ref: ).*", desc)
+    catalogue_raw = re.search(r"\[(.+)\]", name)
     if catalogue_raw == None:
         return '-'
-    catalogue = catalogue_raw.group(0).strip()
+    catalogue = catalogue_raw.group(1).strip()
     return catalogue
 
 # def get_genre(desc):
@@ -155,17 +151,12 @@ def _splitter(inp):
         splitted = inp.split(" ")
         return splitted
 
-# def _to_hashtag(inp):
-#     res = ""
-#     if inp == "":
-#         return ""
-#     inp = inp.replace('#', '')
-#     splitted = _splitter(inp)
-#     for ch in splitted:
-#         out = "#" + ch.strip().replace(" ", "_")
-#         out = out.replace(".", "")
-#         res = res + out + " "
-#     return res
+def hash_artist(artist):
+    splitted = artist.split('&')
+    res = ''
+    for sp in splitted:
+        res = res + '#' + sp.strip().replace(' ', '_') + ' '
+    return res
 
 
 
@@ -176,13 +167,13 @@ def get_final_caption(descr_name, descr_contents, debug_toggle=0):
     """
     upload_type = get_upload_type(descr_contents)
     if upload_type == 1:
-        final = "Artist(s): "       + get_artist        (descr_name)       + "\n" + \
-                "Label: "           + get_label         (descr_contents)   + "\n" + \
-                "Catalogue: "       + get_catalogue     (descr_contents)   + "\n" + \
-                "Genre: "           + get_style         (descr_contents)   + "\n" + \
-                "Support: "         + get_support_links (descr_contents)   + "\n" + \
-                "Original upload: " + get_orig_link     (descr_name)       + "\n" + \
-                debug_toggle * ("debug_Title: "+ get_title         (descr_name))       
+        final = "Artist(s): "       + hash_artist(get_artist        (descr_name))      + "\n" + \
+                "Label: "           +             get_label         (descr_contents)   + "\n" + \
+                "Catalogue: "       +             get_catalogue     (descr_name)       + "\n" + \
+                "Genre: "           +             get_style         (descr_contents)   + "\n" + \
+                "Support: "         +             get_support_links (descr_contents)   + "\n" + \
+                "Original upload: " +             get_orig_link     (descr_name)       + "\n" + \
+                debug_toggle * ("debug_Title: "+  get_title         (descr_name))       
         
     elif upload_type == 2:
         podcast, podcast_author, soundcloud = get_podcast_info(descr_contents)
@@ -212,7 +203,7 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    # name = "TM404 - Vactro [KM058]-A8H-fUiOMIM.description"
+    # name = "Clair - XS NRG [RR009]-2uBkNv5iH-I.description"
     # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
 
     dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
