@@ -55,7 +55,7 @@ def get_podcast_info(desc):
     _podcast_author = _podcast_descr_raw.group(2).strip()
     _soundcloud = re.search(r'Download.+:\n.+', desc).group(0).strip()
 
-    _podcast_author = re.sub(r'[\[\]\.]', '', _podcast_author)
+    _podcast_author = re.sub(r'[\[\]\(\)\.]', '', _podcast_author)
     _podcast_author = _podcast_author.replace(' ', '_')
     _podcast_author = '#' + _podcast_author
     
@@ -67,9 +67,11 @@ def get_artist(name):
     if artist_raw == None:
         return "Unknown"
     artist = artist_raw.group(1).strip()
-    artist = '#' + artist.replace(' ', '_')
-
-    return artist
+    splitted = artist.split('&')
+    res = ''
+    for sp in splitted:
+        res = res + '#' + sp.strip().replace(' ', '_') + ' '
+    return res
 
 def get_title(name):
     title_raw = re.search(r"(?: - )(.+)(?:\[)", name)
@@ -90,8 +92,8 @@ def get_label(desc):
     if label_raw == None:
         return '-'
     label = label_raw.group(2).strip()
-    
-    label = '#' + label.replace(' ', '_')
+    label = '#' + label.replace('-', '_').replace('.', '_').replace(' ', '_')
+    label = re.sub(r'[\[\]\(\)]', '', label)
     return label
 
 def get_catalogue(desc):
@@ -153,21 +155,21 @@ def _splitter(inp):
         splitted = inp.split(" ")
         return splitted
 
-def _to_hashtag(inp):
-    res = ""
-    if inp == "":
-        return ""
-    inp = inp.replace('#', '')
-    splitted = _splitter(inp)
-    for ch in splitted:
-        out = "#" + ch.strip().replace(" ", "_")
-        out = out.replace(".", "")
-        res = res + out + " "
-    return res
+# def _to_hashtag(inp):
+#     res = ""
+#     if inp == "":
+#         return ""
+#     inp = inp.replace('#', '')
+#     splitted = _splitter(inp)
+#     for ch in splitted:
+#         out = "#" + ch.strip().replace(" ", "_")
+#         out = out.replace(".", "")
+#         res = res + out + " "
+#     return res
 
 
 
-def get_final_caption(descr_name, descr_contents):
+def get_final_caption(descr_name, descr_contents, debug_toggle=0):
     """
         Get final post caption
         str: name of description file , str: description contents
@@ -175,17 +177,16 @@ def get_final_caption(descr_name, descr_contents):
     upload_type = get_upload_type(descr_contents)
     if upload_type == 1:
         final = "Artist(s): "       + get_artist        (descr_name)       + "\n" + \
-                "debug_Title: "     + get_title         (descr_name)       + "\n" + \
                 "Label: "           + get_label         (descr_contents)   + "\n" + \
                 "Catalogue: "       + get_catalogue     (descr_contents)   + "\n" + \
                 "Genre: "           + get_style         (descr_contents)   + "\n" + \
                 "Support: "         + get_support_links (descr_contents)   + "\n" + \
-                "Original upload: " + get_orig_link     (descr_name)
+                "Original upload: " + get_orig_link     (descr_name)       + "\n" + \
+                debug_toggle * ("debug_Title: "+ get_title         (descr_name))       
         
     elif upload_type == 2:
         podcast, podcast_author, soundcloud = get_podcast_info(descr_contents)
-        final = podcast + " " + podcast_author + "\n" + "\n" + soundcloud + \
-                "Original upload: " + get_orig_link(descr_name)
+        final = podcast + " " + podcast_author + "\n" + "\n" + soundcloud + "Original upload: " + get_orig_link(descr_name)
     
     elif upload_type == 3:
         final_raw = re.search(r'[\s\S]+?(?=Follow.+here:)', descr_contents)
@@ -211,7 +212,7 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    # name = "Peter Van Hoesen - Allocators [T2X37]-A1aeGnAK5yU.description"
+    # name = "TM404 - Vactro [KM058]-A8H-fUiOMIM.description"
     # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
 
     dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
@@ -221,7 +222,7 @@ def _tests():
 
 
     fin_prep = description.read() 
-    print("\n" + get_final_caption(name, fin_prep) + "\n")
+    print("\n" + get_final_caption(name, fin_prep, 1) + "\n")
 
 
 
@@ -239,6 +240,8 @@ if __name__ == '__main__':
 
         Radical G - The Deserted Kingdom (10 Inch Version) [RR5]-msQyuGdUx4Y.description
         
+        name = "Tham - HATE Podcast 223-b6AfWfSMjIk.description"
+
         Divide & Oisel - Ciclo 2 [AFKLTD05]-zu_QrP4qX2I.description
         
         Jensen Interceptor & DJ Deeon - Sweat [DANCETRAX031]-rZlfTFjKas8.description
