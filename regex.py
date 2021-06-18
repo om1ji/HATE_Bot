@@ -38,7 +38,7 @@ def get_upload_type(desc):
     2 - podcast
     3 - special/other/unmathed
     """
-    _type_raw = re.search(r'(\d+ Hate Podcast with )(.+) ?\\n', desc)
+    _type_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n', desc)
     if _type_raw != None:
         return 2
     else:
@@ -50,7 +50,7 @@ def get_upload_type(desc):
         
 
 def get_podcast_info(desc):
-    _podcast_descr_raw = re.search(r'(\d+ Hate Podcast with )(.+) ?\\n', desc)
+    _podcast_descr_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n', desc)
     _podcast_descr = _podcast_descr_raw.group(1).strip()
     _podcast_author = _podcast_descr_raw.group(2).strip()
     _soundcloud = re.search(r'Download.+:\n.+', desc).group(0).strip()
@@ -177,7 +177,8 @@ def get_final_caption(descr_name, descr_contents, debug_toggle=0):
         
     elif upload_type == 2:
         podcast, podcast_author, soundcloud = get_podcast_info(descr_contents)
-        final = podcast + " " + podcast_author + "\n" + "\n" + soundcloud + "Original upload: " + get_orig_link(descr_name)
+        final = podcast + " " + podcast_author + "\n" + "\n" + soundcloud + "\n" + "\n" + \
+                "Original upload: " + get_orig_link(descr_name)
     
     elif upload_type == 3:
         final_raw = re.search(r'[\s\S]+?(?=Follow.+here:)', descr_contents)
@@ -203,13 +204,13 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    # name = "Clair - XS NRG [RR009]-2uBkNv5iH-I.description"
-    # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
-
-    dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
-    name = dir_list[random.randint(0,376)]
+    name = "Tham - HATE Podcast 223-b6AfWfSMjIk.description"
     description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
-    print("\n" + name)
+
+    # dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
+    # name = dir_list[random.randint(0, 657)]
+    # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
+    # print("\n" + name)
 
 
     fin_prep = description.read() 
@@ -231,18 +232,7 @@ if __name__ == '__main__':
 
         Radical G - The Deserted Kingdom (10 Inch Version) [RR5]-msQyuGdUx4Y.description
         
-        name = "Tham - HATE Podcast 223-b6AfWfSMjIk.description"
-
-        Divide & Oisel - Ciclo 2 [AFKLTD05]-zu_QrP4qX2I.description
-        
-        Jensen Interceptor & DJ Deeon - Sweat [DANCETRAX031]-rZlfTFjKas8.description
-        
-        Gëinst - White Tides [ACCENTVA005]-1tjX_aG8kBk.description
-
-        DJDJ (Dj Dorien & Job Sifre) - Bloody Mary [KAOS08]-wXWrfRDfWTE.description
-
-        Marco Bruno - Early Shift [EVIGHET002]-jUN6Jg102gQ.description
-    
+            
 """
 
 
