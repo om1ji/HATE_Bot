@@ -77,7 +77,7 @@ def get_title(name):
     return title
 
 def get_orig_link(name):
-    orig_link_raw = re.search(r"([a-zA-Z0-9_-]{11})(?:\.description)$", name)
+    orig_link_raw = re.search(r"([a-zA-Z0-9_-]{11})(?:\.\.?description)$", name)
     orig_link = orig_link_raw.group(1).strip()
     return "https://youtu.be/" + orig_link
     
@@ -204,13 +204,13 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    name = "Tham - HATE Podcast 223-b6AfWfSMjIk.description"
-    description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
-
-    # dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
-    # name = dir_list[random.randint(0, 657)]
+    # name = "Deano - Curveball #4 (Luke Hess Remix) [SNG021D]-TplFo-vReBs..description"
     # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
-    # print("\n" + name)
+
+    dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
+    name = dir_list[random.randint(0, 657)]
+    description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
+    print("\n" + name)
 
 
     fin_prep = description.read() 
