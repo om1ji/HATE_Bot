@@ -38,7 +38,7 @@ def get_upload_type(desc):
     2 - podcast
     3 - special/other/unmathed
     """
-    _type_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n', desc)
+    _type_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', desc)
     if _type_raw != None:
         return 2
     else:
@@ -50,7 +50,7 @@ def get_upload_type(desc):
         
 
 def get_podcast_info(desc):
-    _podcast_descr_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n', desc)
+    _podcast_descr_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', desc)
     _podcast_descr = _podcast_descr_raw.group(1).strip()
     _podcast_author = _podcast_descr_raw.group(2).strip()
     _soundcloud = re.search(r'Download.+:\n.+', desc).group(0).strip()
@@ -67,7 +67,13 @@ def get_artist(name):
     if artist_raw == None:
         return "Unknown"
     artist = artist_raw.group(1).strip()
-    return artist
+    remixer_raw = re.search('(?<=\()(.+)(?= (R|r)emix\))|(?<=\()(.+)(?= (E|e)dit\))', name)
+    if remixer_raw == None:
+        remixer = ""
+    else:
+        remixer = " & " + str(remixer_raw.group(1)).strip() + str(remixer_raw.group(3)).strip()
+        remixer = remixer.replace("None", "") #please never do this
+    return artist + remixer
 
 def get_title(name):
     title_raw = re.search(r"(?: - )(.+)(?:\[)", name)
@@ -88,7 +94,7 @@ def get_label(desc):
     if label_raw == None:
         return '-'
     label = label_raw.group(2).strip()
-    label = '#' + label.replace('-', '_').replace('.', '_').replace(' ', '_')
+    label = '#' + label.replace('\'', '').replace('-', '_').replace('.', '_').replace(' ', '_')
     label = re.sub(r'[\[\]\(\)]', '', label)
     return label
 
@@ -155,7 +161,7 @@ def hash_artist(artist):
     splitted = artist.split('&')
     res = ''
     for sp in splitted:
-        res = res + '#' + sp.strip().replace('.', '_').replace(' ', '_') + ' '
+        res = res + '#' + sp.strip().replace('-', '_').replace('.', '_').replace(' ', '_') + ' '
     return res
 
 
@@ -177,12 +183,11 @@ def get_final_caption(descr_name, descr_contents, debug_toggle=0):
         
     elif upload_type == 2:
         podcast, podcast_author, soundcloud = get_podcast_info(descr_contents)
-        final = podcast + " " + podcast_author + "\n" + "\n" + soundcloud + "\n" + "\n" + \
-                "Original upload: " + get_orig_link(descr_name)
+        final = podcast + " " + podcast_author + "\n" + "\n" + soundcloud + "\n" + "\n" + "Original upload: " + get_orig_link(descr_name)
     
     elif upload_type == 3:
         final_raw = re.search(r'[\s\S]+?(?=Follow.+here:)', descr_contents)
-        final = final_raw.group(0).strip()
+        final = final_raw.group(0).strip() + "\n" + "\n" + "Original upload: " + get_orig_link(descr_name)
     
     else:
         final = ""
@@ -204,11 +209,11 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    # name = "D.Dan - Spilling Over [PX099]-FkdKAT_KXE4..description"
+    # name = "Forest on Stasys - Ofrenda (Alfred Czital Midnight Edit) [HARMONY006]-6ETW1ADScjk.description"
     # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
 
     dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
-    name = dir_list[random.randint(0, 657)]
+    name = dir_list[random.randint(0, 656)]
     description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
     print("\n" + name)
 
