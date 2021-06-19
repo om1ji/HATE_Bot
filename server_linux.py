@@ -60,9 +60,9 @@ def webhook():
         file_path = BOT.get_file(file_id).file_path
         file_itself = requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(TOKEN, file_path))
 
-        # caption = final(track_descr.read())
+        caption = get_final_caption(track_descr.read())
 
-        BOT.send_audio(CHAT_ID, audio=file_itself.content, performer=artist(read_track_descr), title=title(read_track_descr))
+        BOT.send_audio(CHAT_ID, audio=file_itself.content, caption=caption, performer=get_artist(read_track_descr), title=get_title(read_track_descr))
 
         track_descr.close()
         single_file['document'].close()
