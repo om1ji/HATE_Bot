@@ -171,6 +171,7 @@ def get_final_caption(descr_name, descr_contents, debug_toggle=0):
         Get final post caption
         str: name of description file , str: description contents
     """
+    descr_name = os.path.basename(descr_name)
     upload_type = get_upload_type(descr_contents)
     if upload_type == 1:
         final = "Artist(s): "       + hash_artist(get_artist        (descr_name))      + "\n" + \
