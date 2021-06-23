@@ -78,7 +78,7 @@ def get_artist(name):
 def get_title(name):
     title_raw = re.search(r"(?: - )(.+)(?:\[)", name)
     if title_raw == None:
-        return "Unknown"
+        return "bruhbruhburbrbh"
     title = title_raw.group(1).strip()
     return title
 
@@ -210,13 +210,13 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    # name = "Forest on Stasys - Ofrenda (Alfred Czital Midnight Edit) [HARMONY006]-6ETW1ADScjk.description"
-    # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
-
-    dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
-    name = dir_list[random.randint(0, 656)]
+    name = "Szymon - Deteriorate [BT006]-KBUZohufnUo.description"
     description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
-    print("\n" + name)
+
+    # dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
+    # name = dir_list[random.randint(0, 656)]
+    # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
+    # print("\n" + name)
 
 
     fin_prep = description.read() 
