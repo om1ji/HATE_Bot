@@ -15,13 +15,13 @@ import inspect
 #    artist = artist_raw.group(2).strip()
 #    return artist
 
-#Берёт название с самого релиза/альбома. Скорее всего уберу:
+#Берёт название с самого релиза/альбома, для метаданных
 
-#def title(desc):
-#    #Title
-#    title_raw = re.search(r"(Title: )(.*)", desc)
-#    title = title_raw.group(2).strip()
-#    return title
+def get_album_title(desc):
+   #Title
+   title_raw = re.search(r"(Title: )(.*)", desc)
+   title = title_raw.group(2).strip()
+   return title
 
 """
     ОЧЕНЬ ВАЖНО!! В аргумент функций artist, title и orig_link подаётся НАЗВАНИЕ описания, а не его содержимое
