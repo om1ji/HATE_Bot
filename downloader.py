@@ -1,77 +1,81 @@
-from flask import Flask, request, render_template, url_for
-import re, os, shutil
-import telebot, json, requests
-from regex import *
+import os
+import shutil
+import json
 import sqlite3
 import time
+import requests
+
+import telebot
+from telebot.types import BaseInlineQueryResultCached
+
+from regex import *
+from _logging import *
 
 DIRECTION = r'/home/bot/HATE/Files/'
-queue_dir = r'/home/bot/HATE/Files/queue.db'
+QUEUE_DIR = DIRECTION + 'queue.db'
+LOGFILE = DIRECTION + "compound log.txt"
 TOKEN = '1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s'
 CHAT_ID = -1001389676477
+TMP_CHAT_ID = -1001170446896
 BOT = telebot.TeleBot(TOKEN)
 
 
-
-
-def extract_link(raw):
-    raw = raw.decode('utf-8')
-    matches = re.search(r"(?<=\<yt\:videoId\>).+(?=\<\/yt\:videoId\>)", raw)
-    link = matches.group(0).strip()
-    return link
-
-def download_from_queue(queue_dir):
-    os.chdir(DIRECTION)
-    _con = sqlite3.connect(queue_dir)
+def download_from_queue(QUEUE_DIR):
+    _con = sqlite3.connect(QUEUE_DIR)
     cur = _con.cursor() 
     while True:
+        os.chdir(DIRECTION)
         cur.execute("SELECT * FROM queue")
         current_link = cur.fetchone()
         if current_link:
+            _log(LOGFILE, "Fetched link: " + current_link + ", running downloading....")
             # Run downloading
-            os.system("""youtube-dl -x https://www.youtube.com/watch?v={} 
+            os.system(f"""youtube-dl -x https://www.youtube.com/watch?v={current_link} 
                         --audio-format mp3 --audio-quality 0 
                         --write-description -o "./%(id)s/%(title)s-%(id)s.%(ext)s" 
-                        --write-thumbnail"""
-                        .format(current_link))
-
+                        --write-thumbnail""")
+            _log(LOGFILE, "Downloading finished!", 1)
             folder = DIRECTION + current_link + '/' #Путь до папки
             os.chdir(folder)
             basename = os.path.splitext(os.listdir()[0])[0]
 
             track_descr = folder + basename + '.description' #Путь до файла .description
-            track_descr = open(track_descr)
-            read_track_descr = track_descr.read()
-
+            read_track_descr = open(track_descr).read()
+            _log(LOGFILE, f"Folder: {folder}, path to .description file: {track_descr}", 1)
             single_file = {'document': open(folder + basename + '.mp3', 'rb')}
 
-            print('\nНачинаем отправку\n')
-            the_file = requests.post("https://api.telegram.org/bot1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s/sendDocument?chat_id=-1001170446896", files=single_file)
+            _log(LOGFILE, "Sending to temp channel...", 1)
+            the_file = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=single_file)
 
             file_id = json.loads(the_file.text)['result']['document']['file_id']
             message_id = json.loads(the_file.text)['result']['message_id']
 
             file_path = BOT.get_file(file_id).file_path
-            file_itself = requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(TOKEN, file_path))
+            _log(LOGFILE, f"File path: {file_path}; File id: {file_id}; Message id: {message_id}", 2)
+            file_itself = requests.get(f'https://api.telegram.org/file/bot{TOKEN}/{file_path}')
 
-            caption = get_final_caption(track_descr.read())
-
-            BOT.send_audio(CHAT_ID, audio=file_itself.content, caption=caption, performer=get_artist(read_track_descr), title=get_title(read_track_descr))
+            caption = get_final_caption(basename + '.description', read_track_descr)
+            BOT.send_audio(CHAT_ID, audio=file_itself.content, 
+                                    caption=caption, 
+                                    performer=get_artist(read_track_descr), 
+                                    title=get_title(read_track_descr))
+            _log(LOGFILE, "Audio sent to the main channel!")
 
             track_descr.close()
             single_file['document'].close()
 
-            BOT.delete_message(-1001170446896, message_id)
-            shutil.rmtree(DIRECTION + extract_link(request.data))
-            
+            BOT.delete_message(TMP_CHAT_ID, message_id)
+            _log(LOGFILE, "Message deleted from temp channel", 1)
+            shutil.rmtree(DIRECTION + current_link)
+            _log(LOGFILE, f"Directory {DIRECTION + current_link} removed", 1)
             cur.execute("""DELETE FROM queue,
                         WHERE rowid=1;
                         """)
 
             _con.commit()
-
-            return '200'  
-        time.sleep(30)
+            _log(LOGFILE, "Row deleted from the db", 1)
+            _log(LOGFILE, "=CYCLE ENDED=" , 1)
+        time.sleep(15)
 
 if __name__ == '__main__':
-    download_from_queue(queue_dir)
+    download_from_queue(QUEUE_DIR)
