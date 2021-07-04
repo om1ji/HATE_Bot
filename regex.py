@@ -169,7 +169,9 @@ def hash_artist(artist):
 def get_final_caption(descr_name, descr_contents, debug_toggle=0):
     """
         Get final post caption
-        str: name of description file , str: description contents
+        :param descr_name: name of description file 
+        :param descr_contents: description contents
+        :param debug_toggle: (default = 0) debug toggle for song name
     """
     descr_name = os.path.basename(descr_name)
     upload_type = get_upload_type(descr_contents)
