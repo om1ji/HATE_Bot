@@ -4,6 +4,7 @@ import json
 import sqlite3
 import time
 import requests
+from requests.api import request
 
 import telebot
 from telebot.types import BaseInlineQueryResultCached
@@ -43,12 +44,16 @@ def download_from_queue(QUEUE_DIR):
             read_track_descr = open(track_descr).read()
             _log(LOGFILE, f"Folder: {folder}, path to .description file: {track_descr}", 1)
             single_file = {'document': open(folder + basename + '.mp3', 'rb')}
+            thumbnail = {'document': open(folder + basename + '.jpg', 'rb')}
 
             _log(LOGFILE, "Sending to temp channel...", 1)
             the_file = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=single_file)
+            the_thumb = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=thumbnail)
+            
 
             file_id = json.loads(the_file.text)['result']['document']['file_id']
             message_id = json.loads(the_file.text)['result']['message_id']
+            thumb_id = json.loads(the_thumb.text)['result']['document']['file_id']
 
             file_path = BOT.get_file(file_id).file_path
             _log(LOGFILE, f"File path: {file_path}; File id: {file_id}; Message id: {message_id}", 2)
@@ -58,7 +63,8 @@ def download_from_queue(QUEUE_DIR):
             BOT.send_audio(CHAT_ID, audio=file_itself.content, 
                                     caption=caption, 
                                     performer=get_artist(read_track_descr), 
-                                    title=get_title(read_track_descr))
+                                    title=get_title(read_track_descr),
+                                    thumb=thumb_id)
             _log(LOGFILE, "Audio sent to the main channel!")
 
             track_descr.close()
