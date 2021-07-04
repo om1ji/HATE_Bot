@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, url_for
-import re, os, shutil
-import telebot, json, requests
+import re
+import telebot
 from regex import *
+from _logging import *
 import sqlite3
 
 
@@ -11,9 +12,9 @@ DIRECTION = r'/home/bot/HATE/Files/'
 TOKEN = '1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s'
 CHAT_ID = -1001389676477
 BOT = telebot.TeleBot(TOKEN)
+LOGFILE = DIRECTION + "compound log.txt"
 
-_con = sqlite3.connect('/home/bot/HATE/Files/queue.db')
-cur = _con.cursor()
+
 
 #================================================================
 
@@ -39,17 +40,21 @@ def webhook():
             return request.args.get('hub.challenge', '')
 
     elif request.method == 'POST':
-        print('\nВходящий вебхук!\n')
-        print(request.data)
+        _log(LOGFILE, "Incoming webhook with following data: " + request.data)
         link = extract_link(request.data)
         cur.execute('''INSERT INTO queue
                     (link)
                     VALUES (\'{}\')
                     '''.format(link))
         _con.commit()
+        _log(LOGFILE, f"Link \"{link}\" inserted!")
+        return '200'
 
 
 if __name__=='__main__':
+    _con = sqlite3.connect('/home/bot/HATE/Files/queue.db')
+    cur = _con.cursor()
     cur.execute('''CREATE TABLE IF NOT EXISTS queue
                (link text)''')
+    _con.commit()
     app.run()
