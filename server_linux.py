@@ -1,9 +1,11 @@
-from flask import Flask, request, render_template, url_for
 import re
+import sqlite3
+
+from flask import Flask, request, render_template, url_for
 import telebot
+
 from regex import *
 from _logging import *
-import sqlite3
 
 
 app = Flask(__name__)
@@ -12,7 +14,7 @@ DIRECTION = r'/home/bot/HATE/Files/'
 TOKEN = '1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s'
 CHAT_ID = -1001389676477
 BOT = telebot.TeleBot(TOKEN)
-LOGFILE = DIRECTION + "compound log.txt"
+LOGFILE = DIRECTION + "server_linux-log.txt"
 
 
 

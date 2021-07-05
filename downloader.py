@@ -7,14 +7,13 @@ import requests
 from requests.api import request
 
 import telebot
-from telebot.types import BaseInlineQueryResultCached
 
 from regex import *
 from _logging import *
 
 DIRECTION = r'/home/bot/HATE/Files/'
 QUEUE_DIR = DIRECTION + 'queue.db'
-LOGFILE = DIRECTION + "compound log.txt"
+LOGFILE = DIRECTION + "dowloader-log.txt"
 TOKEN = '1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s'
 CHAT_ID = -1001389676477
 TMP_CHAT_ID = -1001170446896
