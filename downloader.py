@@ -38,12 +38,12 @@ def download_from_queue(QUEUE_DIR):
             _log(LOGFILE, "Downloading finished!", 1)
             folder = RESULT_DIR + current_link[-11:] + '/' #Путь до папки
             os.chdir(folder)
-            _log(LOGFILE, "Fole", 1)
             basename = os.path.splitext(os.listdir()[0])[0]
 
-            track_descr = folder + basename + '.description' #Путь до файла .description
-            read_track_descr = open(track_descr).read()
-            _log(LOGFILE, f"Folder: {folder}, path to .description file: {track_descr}", 1)
+            track_descr_path = folder + basename + '.description' #Путь до файла .description
+            track_descr = open(track_descr_path) #Путь до файла .description
+            read_track_descr = track_descr.read()
+            _log(LOGFILE, f"Folder: {folder}, path to .description file: {track_descr_path}", 1)
             single_file = {'document': open(folder + basename + '.mp3', 'rb')}
             thumbnail = {'document': open(folder + basename + '.webp', 'rb')}
 
@@ -51,10 +51,17 @@ def download_from_queue(QUEUE_DIR):
             the_file = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=single_file)
             the_thumb = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=thumbnail)
             
+            try:
+                file_id = json.loads(the_file.text)['result']['audio']['file_id']
+                duration = json.loads(the_file.text)['result']['audio']['duration']
+            except KeyError:
+                file_id = json.loads(the_file.text)['result']['document']['file_id']
+                duration = 0
 
             file_id = json.loads(the_file.text)['result']['document']['file_id']
             message_id = json.loads(the_file.text)['result']['message_id']
-            thumb_id = json.loads(the_thumb.text)['result']['document']['file_id']
+            _log(LOGFILE, "thumb result: " + str(json.loads(the_thumb.text)['result']), 1)
+            thumb_id = json.loads(the_thumb.text)['result']['sticker']['thumb']['file_id']
 
             file_path = BOT.get_file(file_id).file_path
             _log(LOGFILE, f"File path: {file_path}; File id: {file_id}; Message id: {message_id}", 2)
@@ -63,9 +70,10 @@ def download_from_queue(QUEUE_DIR):
             caption = get_final_caption(basename + '.description', read_track_descr)
             BOT.send_audio(CHAT_ID, audio=file_itself.content, 
                                     caption=caption, 
-                                    performer=get_artist(read_track_descr), 
-                                    title=get_title(read_track_descr),
-                                    thumb=thumb_id)
+                                    performer=get_artist(basename + '.description'), 
+                                    title=get_title(basename + '.description'),
+                                    thumb=thumb_id,
+                                    duration=duration)
             _log(LOGFILE, "Audio sent to the main channel!")
 
             track_descr.close()
@@ -73,9 +81,9 @@ def download_from_queue(QUEUE_DIR):
 
             BOT.delete_message(TMP_CHAT_ID, message_id)
             _log(LOGFILE, "Message deleted from temp channel", 1)
-            shutil.rmtree(DIRECTION + current_link)
-            _log(LOGFILE, f"Directory {DIRECTION + current_link} removed", 1)
-            cur.execute("""DELETE FROM queue,
+            shutil.rmtree(folder)
+            _log(LOGFILE, f"Directory {folder} removed", 1)
+            cur.execute("""DELETE FROM queue
                         WHERE rowid=1;
                         """)
 
