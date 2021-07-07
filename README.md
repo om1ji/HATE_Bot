@@ -16,7 +16,7 @@
     - Либо через [сайт](https://pubsubhubbub.appspot.com/subscribe).
     - Либо через HTTP POST-запрос:
 ``` 
-https://pubsubhubbub.appspot.com/subscribe?hub.callback={URL до вашего сервера}&hub.mode=subscribe&hub.topic={RSS на канал в Ютубе}
+https://pubsubhubbub.appspot.com/subscribe?hub.callback={URL до вашего сервера}&hub.mode=subscribe&hub.topic=https://www.youtube.com/xml/feeds/videos.xml?channel_id={id канала}
 ```
 
 4. Запуск бота:
