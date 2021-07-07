@@ -21,14 +21,17 @@ BOT = telebot.TeleBot(TOKEN)
 
 
 def download_from_queue(QUEUE_DIR):
-    print(QUEUE_DIR)
+    _log(LOGFILE, "====Running downloading on queue db: " + QUEUE_DIR)
     _con = sqlite3.connect(QUEUE_DIR)
     cur = _con.cursor() 
+    counter = 0
     while True:
+        empty_check = False
         os.chdir(DIRECTION)
         cur.execute("SELECT * FROM queue")
-        current_link = cur.fetchone()[0]
+        current_link = cur.fetchone()
         if current_link:
+            current_link = current_link[0]
             _log(LOGFILE, "Fetched link: " + str(current_link) + ", running downloading....")
             # Run downloading
             os.system(f"""youtube-dl -x {current_link} \
@@ -54,6 +57,7 @@ def download_from_queue(QUEUE_DIR):
             try:
                 file_id = json.loads(the_file.text)['result']['audio']['file_id']
                 duration = json.loads(the_file.text)['result']['audio']['duration']
+                _log(LOGFILE, "Duration: " + duration, 1)
             except KeyError:
                 file_id = json.loads(the_file.text)['result']['document']['file_id']
                 duration = 0
@@ -89,8 +93,11 @@ def download_from_queue(QUEUE_DIR):
 
             _con.commit()
             _log(LOGFILE, "Row deleted from the db", 1)
-            _log(LOGFILE, "=CYCLE ENDED=" , 1)
+            counter += 1
+            _log(LOGFILE, f"=CYCLE {counter} FINISHED=" , 1)
         else:
+            if not empty_check:
+                _log(LOGFILE, "All cycles finished. Awaiting and polling for the next request...")
             time.sleep(15)
 
 if __name__ == '__main__':

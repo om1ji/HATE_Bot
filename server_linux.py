@@ -7,7 +7,6 @@ import telebot
 from regex import *
 from _logging import _log
 
-
 app = Flask(__name__)
 
 DIRECTION = r'/home/bot/HATE/'
@@ -15,8 +14,6 @@ TOKEN = '1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s'
 CHAT_ID = -1001389676477
 BOT = telebot.TeleBot(TOKEN)
 LOGFILE = DIRECTION + "server_linux-log.txt"
-
-
 
 #================================================================
 
@@ -51,7 +48,6 @@ def webhook():
         _con.commit()
         _log(LOGFILE, f"Link \"{link}\" inserted!")
         return '200'
-
 
 if __name__=='__main__':
     _con = sqlite3.connect(DIRECTION + 'queue.db')
