@@ -5,12 +5,12 @@ from flask import Flask, request, render_template, url_for
 import telebot
 
 from regex import *
-from _logging import *
+from _logging import _log
 
 
 app = Flask(__name__)
 
-DIRECTION = r'/home/bot/HATE/Files/'
+DIRECTION = r'/home/bot/HATE/'
 TOKEN = '1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s'
 CHAT_ID = -1001389676477
 BOT = telebot.TeleBot(TOKEN)
@@ -54,7 +54,7 @@ def webhook():
 
 
 if __name__=='__main__':
-    _con = sqlite3.connect('/home/bot/HATE/Files/queue.db')
+    _con = sqlite3.connect(DIRECTION + 'queue.db')
     cur = _con.cursor()
     cur.execute('''CREATE TABLE IF NOT EXISTS queue
                (link text)''')
