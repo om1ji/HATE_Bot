@@ -8,11 +8,14 @@
 
 2. Иметь либо VPS, либо домашний сервер (можно любое устройство, поддерживающее Linux или Windows) с бесперебойной работой и постоянным подключением к интернету.
 
-3. Запуск бота:
+3. Установить все зависимости: ```pip install -r requitements.txt```
+    - Если Linux, то ```pip3```
+
+4. Запуск бота:
     - Linux: ```sudo FLASK_APP=server_linux.py flask run --host=0.0.0.0 --port=80```
     - Windows: ```set FLASK_APP=server_windows.py flask run --host=0.0.0.0 --port=80```
 
-4. Подписаться на уведомления PubSubHubbub:
+5. Подписаться на уведомления PubSubHubbub:
     - Либо через [сайт](https://pubsubhubbub.appspot.com/subscribe).
     - Либо через HTTP POST-запрос:
 ``` 
