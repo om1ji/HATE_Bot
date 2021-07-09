@@ -180,8 +180,8 @@ def get_final_caption(descr_name, descr_contents, debug_toggle=0):
                 "Label: "           +             get_label         (descr_contents)   + "\n" + \
                 "Catalogue: "       +             get_catalogue     (descr_name)       + "\n" + \
                 "Genre: "           +             get_style         (descr_contents)   + "\n" + \
-                "Support: "         +             get_support_links (descr_contents)   + "\n" + \
-                "Original upload: " +             get_orig_link     (descr_name)       + "\n" + \
+                "[Support]({})".format(get_support_links(descr_contents))     + '\n' + \
+                "[Original upload]({})".format(get_orig_link(descr_name))     + '\n' + \
                 debug_toggle * ("debug_Title: "+  get_title         (descr_name))       
         
     elif upload_type == 2:
