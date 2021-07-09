@@ -19,7 +19,6 @@ CHAT_ID = -1001389676477
 TMP_CHAT_ID = -1001170446896
 BOT = telebot.TeleBot(TOKEN)
 
-
 def download_from_queue(QUEUE_DIR):
     _log(LOGFILE, "====Running downloading on queue db: " + QUEUE_DIR + "====")
     _con = sqlite3.connect(QUEUE_DIR)
@@ -48,8 +47,9 @@ def download_from_queue(QUEUE_DIR):
             basename = os.path.splitext(os.listdir()[0])[0]
 
             track_descr_path = folder + basename + '.description' #Путь до файла .description
-            track_descr = open(track_descr_path) #Путь до файла .description
+            track_descr = open(track_descr_path)
             read_track_descr = track_descr.read()
+
             _log(LOGFILE, f"Folder: {folder}, path to .description file: {track_descr_path}", 1)
             single_file = {'document': open(folder + basename + '.mp3', 'rb')}
             thumbnail = {'document': open(folder + basename + '.webp', 'rb')}
@@ -84,7 +84,8 @@ def download_from_queue(QUEUE_DIR):
                                     performer=get_artist(basename + '.description'), 
                                     title=get_title(basename + '.description'),
                                     thumb=thumb_id,
-                                    duration=duration)
+                                    duration=duration,
+                                    parse_mode='HTML')
             _log(LOGFILE, "Audio sent to the main channel!")
 
             track_descr.close()

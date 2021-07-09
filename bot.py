@@ -1,41 +1,66 @@
 import telebot
 from telebot import types
 import sqlite3
+import requests
+import os
 
-TOKEN = '1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s'
+TOKEN = '1801374241:AAH5NsIApYX3L0U9IvVLSGQ0G6Bsd8k4iRc'
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    connect = sqlite3.connect('users.db')
-    cursor = connect.cursor()
 
-    cursor.execute("""CREATE TABLE IF NOT EXISTS login_id(
-        id INTEGER
-        yt_ch TEXT
-        tg_ch INTEGER
-    )""")
+    cursor = connect.cursor()
+    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY,
+        FOREIGN KEY (id)
+            REFERENCES yt_ch (id)
+        FOREIGN KEY (yt_ch)
+            REFERENCES tg_ch (yt_ch)
+        );""")
     connect.commit()
 
+    bot.send_message(message.chat.id, 'Приветствую!')
     people_id = message.chat.id
-    cursor.execute(f"SELECT id FROM login_id WHERE id = {people_id}")
+
+    cursor.execute(f"SELECT id FROM users WHERE id = {people_id};")
     data = cursor.fetchone()
+
     if data is None:
-        user_id = [message.chat.id]
-        cursor.execute("INSERT INTO login_id VALUES(?);", user_id)
+        user_id = message.chat.id
+        print(type(user_id))
+        cursor.execute("INSERT INTO users (id) VALUES(?);", user_id)
         connect.commit()
     else:
         print('Пользователь ' + message.chat.username + ' повторно зарегался')
 
-    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-    itembtn1 = types.KeyboardButton('Подписаться')
-    itembtn2 = types.KeyboardButton('Отписаться')
-    markup.add(itembtn1, itembtn2)
-    bot.send_message(message.chat.id, 'Приветствую!', reply_markup=markup)
-    markup = types.ReplyKeyboardRemove(selective=False)
+@bot.message_handler(commands=['/subscribe'])
+def subscribe(message):
 
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-	bot.reply_to(message, message.text)
+    bot.send_message(message.chat.id, 'Отправь ссылку на Ютуб канал')
+#     bot.register_next_step_handler_by_chat_id(message.chat.id, subscribe_pubsub)
 
-bot.polling()
+
+# def subscribe_pubsub(message):
+#     people_id = message.chat.id
+    
+#     cursor.execute(f"""SELECT yt_ch FROM users WHERE id = {people_id}""")
+#     data = cursor.fetchone()
+#     if data is None:
+#         url = message.text
+#         ch_id = os.system(f'youtube-dl -s {url} -j')
+#         print(ch_id)
+
+#     r = requests.post(f"""https://pubsubhubbub.appspot.com/subscribe?
+#                         hub.callback=http://om1ji.site/webhook&
+#                         hub.mode=subscribe&
+#                         hub.topic=https://www.youtube.com/xml/feeds/videos.xml?channel_id={ch_id}""")
+#     if r.ok:
+#         cursor.execute(f"INSERT INTO users (yt_ch) VALUES(?);", ch_id)
+#         connect.commit()
+
+#     bot.send_message(message.chat.id, 'Успешная подписка на <a href="{ch_url}">канал</a>!', parse_mode='HTML')
+
+if __name__=='__main__':
+    connect = sqlite3.connect('users.db')
+    bot.polling()
