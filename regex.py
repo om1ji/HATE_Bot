@@ -94,7 +94,12 @@ def get_label(desc):
     if label_raw == None:
         return '-'
     label = label_raw.group(2).strip()
-    label = '#' + label.replace('\'', '').replace('-', '_').replace('.', '_').replace(' ', '_')
+    label = re.sub(r'[\\/\(\)\[\]]', '', label)
+    label = '#' + re.sub(r'[-\. ]', '_', label)
+
+    # label = '#' + label.replace('\'', '').replace('/', '').replace('(', '')
+    #                    .replace('-', '_').replace('.', '_').replace(' ', '_')
+    
     label = re.sub(r'[\[\]\(\)]', '', label)
     return label
 
@@ -161,7 +166,12 @@ def hash_artist(artist):
     splitted = artist.split('&')
     res = ''
     for sp in splitted:
-        res = res + '#' + sp.strip().replace('-', '_').replace('.', '_').replace(' ', '_') + ' '
+        print(re.search(r'\D', sp))
+        if re.search(r'\D', sp):
+            res = res + '#' + re.sub(r'[-\. ]', '_', sp) + ' '
+        else:
+            res = res + '#The_' + re.sub(r'[-\. ]', '_', sp) + ' '
+            
     return res
 
 
@@ -180,8 +190,7 @@ def get_final_caption(descr_name, descr_contents, debug_toggle=0):
                 "Label: "           +             get_label         (descr_contents)   + "\n" + \
                 "Catalogue: "       +             get_catalogue     (descr_name)       + "\n" + \
                 "Genre: "           +             get_style         (descr_contents)   + "\n" + \
-                "Support: "         +             get_support_links (descr_contents)   + "\n" + \
-                "Original upload: " +             get_orig_link     (descr_name)       + "\n" + \
+                f"<a href='{get_support_links(descr_contents)}'>Support</a>"  + '   ' + f"<a href='{get_orig_link(descr_name)}'>Original upload</a>" + \
                 debug_toggle * ("debug_Title: "+  get_title         (descr_name))       
         
     elif upload_type == 2:
