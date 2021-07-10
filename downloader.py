@@ -50,15 +50,13 @@ def download_from_queue(QUEUE_DIR):
             track_descr = open(track_descr_path)
             read_track_descr = track_descr.read()
 
-            os.rename(folder + basename + '.webp', folder + basename + '.jpg')
-
             _log(LOGFILE, f"Folder: {folder}, path to .description file: {track_descr_path}", 1)
             single_file = {'document': open(folder + basename + '.mp3', 'rb')}
             thumbnail = open(folder + basename + '.jpg', 'rb')
 
             _log(LOGFILE, "Sending to temp channel...", 1)
             the_file = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=single_file)
-            # the_thumb = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=thumbnail)
+            the_thumb = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=thumbnail)
             
             try:
                 _log(LOGFILE, "Result: " + str(json.loads(the_file.text)['result']), 1)
@@ -72,8 +70,8 @@ def download_from_queue(QUEUE_DIR):
                 duration = 0
 
             message_id = json.loads(the_file.text)['result']['message_id']
-            # _log(LOGFILE, "thumb result: " + str(json.loads(the_thumb.text)['result']), 1)
-            # thumb_id = json.loads(the_thumb.text)['result']['sticker']['thumb']['file_id']
+            _log(LOGFILE, "thumb result: " + str(json.loads(the_thumb.text)['result']), 1)
+            thumb_id = json.loads(the_thumb.text)['result']['sticker']['thumb']['file_id']
 
             file_path = BOT.get_file(file_id).file_path
             _log(LOGFILE, f"File path: {file_path}; File id: {file_id}; Message id: {message_id}", 2)
@@ -85,7 +83,7 @@ def download_from_queue(QUEUE_DIR):
                                     caption=caption, 
                                     performer=get_artist(basename + '.description'), 
                                     title=get_title(basename + '.description'),
-                                    thumb=thumbnail,
+                                    thumb=thumb_id,
                                     duration=duration,
                                     parse_mode='HTML')
             _log(LOGFILE, "Audio sent to the main channel!")
@@ -105,7 +103,7 @@ def download_from_queue(QUEUE_DIR):
             _con.commit()
             _log(LOGFILE, f"Row {current_rowid} deleted from the db", 1)
             counter += 1
-            _log(LOGFILE, f"=CYCLE {counter} FINISHED=")
+            _log(LOGFILE, f"=CYCLE {counter} FINISHED=" , 1)
         else:
             if not empty_check:
                 _log(LOGFILE, "All cycles finished. Awaiting and polling for the next request...")
