@@ -27,10 +27,6 @@ def get_album_title(desc):
     ОЧЕНЬ ВАЖНО!! В аргумент функций artist, title и orig_link подаётся НАЗВАНИЕ описания, а не его содержимое
 """
 
-def _dbgl():
-    """для дебагинга, не трогать"""
-    return inspect.currentframe().f_back.f_lineno
-
 def get_upload_type(desc):
     """
     Returns the upload type of the video:

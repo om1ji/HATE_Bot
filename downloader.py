@@ -6,6 +6,7 @@ import time
 import requests
 
 import telebot
+from PIL import Image
 
 from regex import *
 from _logging import _log
@@ -52,14 +53,23 @@ def download_from_queue(QUEUE_DIR):
 
             _log(LOGFILE, f"Folder: {folder}, path to .description file: {track_descr_path}", 1)
             single_file = {'document': open(folder + basename + '.mp3', 'rb')}
-            thumbnail = open(folder + basename + '.jpg', 'rb')
+
+            try:
+                thumb_conv = Image.open(folder + basename + '.webp')
+                thumb_conv.save(folder + basename + '.jpg', 'jpeg')
+            except FileNotFoundError:
+                _log(LOGFILE, "jpg already exists!", 2)
+
+            thumbnail = {'document': open(folder + basename + '.jpg', 'rb')}
 
             _log(LOGFILE, "Sending to temp channel...", 1)
             the_file = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=single_file)
+            # BOT.send_audio(CHAT_ID, audio=single_file.content)
             the_thumb = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=thumbnail)
             
+
             try:
-                _log(LOGFILE, "Result: " + str(json.loads(the_file.text)['result']), 1)
+                _log(LOGFILE, "Result: " + str(json.loads(the_file.text)), 1)
                 file_id = json.loads(the_file.text)['result']['audio']['file_id']
             except KeyError:
                 file_id = json.loads(the_file.text)['result']['document']['file_id']
@@ -71,7 +81,7 @@ def download_from_queue(QUEUE_DIR):
 
             message_id = json.loads(the_file.text)['result']['message_id']
             _log(LOGFILE, "thumb result: " + str(json.loads(the_thumb.text)['result']), 1)
-            thumb_id = json.loads(the_thumb.text)['result']['sticker']['thumb']['file_id']
+            thumb_id = json.loads(the_thumb.text)['result']['document']['file_id']
 
             file_path = BOT.get_file(file_id).file_path
             _log(LOGFILE, f"File path: {file_path}; File id: {file_id}; Message id: {message_id}", 2)

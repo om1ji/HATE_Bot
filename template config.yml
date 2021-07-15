@@ -1,0 +1,27 @@
+###########################
+# !Mandatory parameters!: #
+###########################
+
+# Directory for all the files 
+DIRECTORY: "/home/bot/HATE/"
+# Your bot token, acquired through @BotFather
+TOKEN: "1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s"
+# Channel IDs, where MAIN_CHAT_ID is your main channel,
+# where all the final posts will be made, and 
+# TEMP_CHAT_ID is your temporary channel.
+MAIN_CHAT_ID: "-1001389676477"
+TEMP_CHAT_ID: "-1001170446896"
+
+
+
+#########################
+# All of the parameters below are optional,
+# but are recommended to being configured.
+# Default values are provided.
+#########################
+results_dir: "tmp/"
+queue_name: "queue.db"
+create_logs: 1
+
+# REGEXES:
+re_original_link: "([a-zA-Z0-9_-]{11})(?:\.\.?description)$"
