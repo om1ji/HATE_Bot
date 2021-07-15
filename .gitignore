@@ -5,3 +5,4 @@ test2.py
 tmp/
 downloader-log.txt
 server_linux-log.txt
+config.yml
