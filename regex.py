@@ -63,7 +63,7 @@ def get_artist(name):
     if artist_raw == None:
         return "Unknown"
     artist = artist_raw.group(1).strip()
-    remixer_raw = re.search('(?<=\()(.+)(?= (R|r)emix\))|(?<=\()(.+)(?= (E|e)dit\))', name)
+    remixer_raw = re.search('(?<=\()(.+)(?= Remix\))|(?<=\()(.+)(?= Edit\))', name, re.IGNORECASE)
     if remixer_raw == None:
         remixer = ""
     else:
@@ -91,13 +91,13 @@ def get_label(desc):
         return '-'
     label = label_raw.group(2).strip()
     label = re.sub(r'[\\/\(\)\[\]]', '', label)
-    label = '#' + re.sub(r'[-\. ]', '_', label)
+    label = re.sub(r'[-\. ]', '_', label)
+    label = re.sub(r'[\[\]\(\)]', '', label)
 
     # label = '#' + label.replace('\'', '').replace('/', '').replace('(', '')
     #                    .replace('-', '_').replace('.', '_').replace(' ', '_')
     
-    label = re.sub(r'[\[\]\(\)]', '', label)
-    return label
+    return '#' + label.strip('_')
 
 def get_catalogue(name):
     #Catalogue
@@ -134,7 +134,7 @@ def get_style(desc):
             out = "#" + ch.strip().replace(" ", "_")
             out = out.replace(".", "")
             res = res + out + " "
-        return res
+        return res.strip('_')
 
 def get_support_links(desc):
     reg = re.compile(r"(?:https?:\/\/(?:\S| )*$)(?=[\s\S]+^Artist)", re.M)
@@ -168,7 +168,7 @@ def hash_artist(artist):
         else:
             res = res + '#The_' + re.sub(r'[-\. ]', '_', sp) + ' '
             
-    return res
+    return res.strip('_')
 
 
 
