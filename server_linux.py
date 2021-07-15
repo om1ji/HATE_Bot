@@ -19,14 +19,12 @@ def extract_link(raw):
     matches = re.search(r"(?<=\<yt\:videoId\>).+(?=\<\/yt\:videoId\>)", raw)
     link = matches.group(0).strip()
     return link
- 
-@app.route('/')
-def index():
-    return render_template('index.html')
 
-@app.route('/me')
-def me():
-    return render_template('Визитка.html')
+def extract_channel_name(raw):
+    raw = raw.decode('utf-8')
+    matches = re.search(r"(?<=\<\name\>).+(?=\</\name\>)", raw)
+    link = matches.group(0).strip()
+    return link    
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
