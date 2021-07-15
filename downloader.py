@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import os
 import shutil
 import json
 import sqlite3
 import time
 import requests
+from subprocess import check_output
 
 import telebot
 from PIL import Image
@@ -87,7 +90,12 @@ def download_from_queue(QUEUE_DIR):
             _log(LOGFILE, f"File path: {file_path}; File id: {file_id}; Message id: {message_id}", 2)
             file_itself = requests.get(f'https://api.telegram.org/file/bot{TOKEN}/{file_path}')
 
-            caption = get_final_caption(basename + '.description', read_track_descr)
+            channel_name = json.loads(check_output(f'youtube-dl -s -J {current_link}', shell=True))['uploader']
+            if channel_name == 'HATE LAB':
+                caption = get_final_caption(basename + '.description', read_track_descr) + '\n' + '#HATE_LAB'
+            else: 
+                caption = get_final_caption(basename + '.description', read_track_descr)
+
             _log(LOGFILE, f"Caption: {caption}", 2)
             BOT.send_audio(CHAT_ID, audio=file_itself.content, 
                                     caption=caption, 
