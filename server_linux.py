@@ -36,9 +36,13 @@ def webhook():
             return request.args.get('hub.challenge', '')
 
     elif request.method == 'POST':
-        _log(LOGFILE, "Incoming webhook with following data: " + request.data)
+        _log(LOGFILE, "Incoming webhook with following data: " + str(request.data))
         link = extract_link(request.data)
-        cur.execute('''INSERT INTO queue
+
+        _con = sqlite3.connect(DIRECTION + 'queue.db')
+        cursor = _con.cursor()
+
+        cursor.execute('''INSERT INTO queue
                     (link)
                     VALUES (\'{}\')
                     '''.format(link))
@@ -48,8 +52,8 @@ def webhook():
 
 if __name__=='__main__':
     _con = sqlite3.connect(DIRECTION + 'queue.db')
-    cur = _con.cursor()
-    cur.execute('''CREATE TABLE IF NOT EXISTS queue
+    cursor = _con.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS queue
                (link text)''')
     _con.commit()
     app.run()
