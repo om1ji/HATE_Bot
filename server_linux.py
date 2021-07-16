@@ -1,5 +1,6 @@
 import re
 import sqlite3
+import time
 
 from flask import Flask, request, render_template, url_for
 import telebot
@@ -34,17 +35,28 @@ def webhook():
             return request.args.get('hub.challenge', '')
 
     elif request.method == 'POST':
+        _con = sqlite3.connect(DIRECTION + 'queue.db')
+        cursor = _con.cursor()
+
         _log(LOGFILE, "Incoming webhook with following data: " + str(request.data))
         link = extract_link(request.data)
 
         _con = sqlite3.connect(DIRECTION + 'queue.db')
         cursor = _con.cursor()
-
-        cursor.execute('''INSERT INTO queue
-                    (link)
-                    VALUES (\'{}\')
-                    '''.format(link))
+        try:
+            cursor.execute('''INSERT INTO queue
+                              (link)
+                              VALUES (\'{}\')
+                              '''.format(link))
+        except sqlite3.OperationalError:
+            _log(LOGFILE, "Database locked, reattempting again in 2 seconds...", 2)
+            time.sleep(2)
+            cursor.execute('''INSERT INTO queue
+                              (link)
+                              VALUES (\'{}\')
+                              '''.format(link))
         _con.commit()
+        _con.close()
         _log(LOGFILE, f"Link \"{link}\" inserted!")
         return '200'
 
