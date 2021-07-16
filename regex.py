@@ -74,7 +74,9 @@ def get_artist(name):
 def get_title(name):
     title_raw = re.search(r"(?: - )(.+)(?:\[)", name)
     if title_raw == None:
-        return "bruhbruhburbrbh"
+        title_raw = re.search(r"(?: - )(.+)(?:-\d{11}\.\.?description)$", name)
+        if title_raw == None:
+            return "bruhbruhburbrbh"
     title = title_raw.group(1).strip()
     return title
 
