@@ -6,3 +6,4 @@ tmp/
 downloader-log.txt
 server_linux-log.txt
 config.yml
+queue.db-journal
