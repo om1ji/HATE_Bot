@@ -31,7 +31,13 @@ def download_from_queue(QUEUE_DIR):
     empty_check = False
     while True:
         os.chdir(DIRECTION)
-        cur.execute("SELECT * FROM queue")
+        try:
+            cur.execute("SELECT * FROM queue")
+        except sqlite3.OperationalError:
+            _log(LOGFILE, "Database locked, reattempting again in 2 seconds...", 2)
+            time.sleep(2)
+            cur.execute("SELECT * FROM queue")
+
         current_link = cur.fetchone()
         if current_link:
             cur.execute("""SELECT rowid FROM queue""")
@@ -76,11 +82,10 @@ def download_from_queue(QUEUE_DIR):
                 file_id = json.loads(the_file.text)['result']['audio']['file_id']
             except KeyError:
                 file_id = json.loads(the_file.text)['result']['document']['file_id']
-            try:    
-                _log(LOGFILE, "Duration: " + str(json.loads(the_file.text)['result']['audio']['duration']), 1)
-                duration = json.loads(the_file.text)['result']['audio']['duration']
-            except KeyError:
-                duration = 0
+            
+            duration = str(check_output(f'youtube-dl -s --get-duration {current_link}', shell=True))[2:6]
+            duration = sum(x * int(t) for x, t in zip([60, 1], duration.split(":"))) 
+            _log(LOGFILE, "Duration: " + str(duration), 1)
 
             message_id = json.loads(the_file.text)['result']['message_id']
             _log(LOGFILE, "thumb result: " + str(json.loads(the_thumb.text)['result']), 1)
