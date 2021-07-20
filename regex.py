@@ -67,7 +67,7 @@ def get_artist(name):
     if remixer_raw == None:
         remixer = ""
     else:
-        remixer = " & " + str(remixer_raw.group(1)).strip() + str(remixer_raw.group(3)).strip()
+        remixer = " & " + str(remixer_raw.group(1)).strip() + str(remixer_raw.group(2)).strip()
         remixer = remixer.replace("None", "") #please never do this
     return artist + remixer
 
@@ -164,7 +164,6 @@ def hash_artist(artist):
     splitted = artist.split('&')
     res = ''
     for sp in splitted:
-        print(re.search(r'\D', sp))
         if re.search(r'\D', sp):
             res = res + '#' + re.sub(r'[-\. ]', '_', sp) + ' '
         else:
@@ -219,7 +218,7 @@ def _tests():
     """
         тестики от артеметры, не трогать
     """
-    name = "Szymon - Deteriorate [BT006]-KBUZohufnUo.description"
+    name = "Ancient Methods - In Silence Die Selektion (In Stille Remix) [PS09]-nLHzYaELlRs.description"
     description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
 
     # dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
