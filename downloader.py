@@ -7,18 +7,20 @@ import sqlite3
 import time
 import requests
 from subprocess import check_output
+import yaml
 
 import telebot
 from PIL import Image
 
 from regex import *
-from _logging import _log
+from utils import _log, db_retry_until_unlocked
 
 DIRECTION = r'/home/bot/HATE/'
+CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
 RESULT_DIR = DIRECTION + 'tmp/'
 QUEUE_DIR = DIRECTION + 'queue.db'
 LOGFILE = DIRECTION + "downloader-log.txt"
-TOKEN = input('Token: ')
+TOKEN = CONFIG['TOKEN']
 CHAT_ID = -1001389676477
 TMP_CHAT_ID = -1001170446896
 BOT = telebot.TeleBot(TOKEN)
@@ -31,16 +33,10 @@ def download_from_queue(QUEUE_DIR):
     empty_check = False
     while True:
         os.chdir(DIRECTION)
-        try:
-            cur.execute("SELECT * FROM queue")
-        except sqlite3.OperationalError:
-            _log(LOGFILE, "Database locked, reattempting again in 2 seconds...", 2)
-            time.sleep(2)
-            cur.execute("SELECT * FROM queue")
-
+        db_retry_until_unlocked(LOGFILE, cur, "SELECT * FROM queue;")
         current_link = cur.fetchone()
         if current_link:
-            cur.execute("""SELECT rowid FROM queue""")
+            db_retry_until_unlocked(LOGFILE, cur, """SELECT rowid FROM queue;""")
             current_rowid = cur.fetchone()[0]
             
             empty_check = False
@@ -119,7 +115,7 @@ def download_from_queue(QUEUE_DIR):
             shutil.rmtree(folder)
             _log(LOGFILE, f"Directory {folder} removed", 1)
 
-            cur.execute(f"""DELETE FROM queue
+            db_retry_until_unlocked(LOGFILE, cur, f"""DELETE FROM queue
                         WHERE rowid={current_rowid};
                         """)
 
