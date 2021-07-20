@@ -1,12 +1,10 @@
 import re
 import sqlite3
-import time
 
-from flask import Flask, request, render_template, url_for
-import telebot
+from flask import Flask, request
 
 from regex import *
-from _logging import _log
+from utils import _log, db_retry_until_unlocked
 
 app = Flask(__name__)
 
@@ -43,18 +41,12 @@ def webhook():
 
         _con = sqlite3.connect(DIRECTION + 'queue.db')
         cursor = _con.cursor()
-        try:
-            cursor.execute('''INSERT INTO queue
-                              (link)
-                              VALUES (\'{}\')
-                              '''.format(link))
-        except sqlite3.OperationalError:
-            _log(LOGFILE, "Database locked, reattempting again in 2 seconds...", 2)
-            time.sleep(2)
-            cursor.execute('''INSERT INTO queue
-                              (link)
-                              VALUES (\'{}\')
-                              '''.format(link))
+
+        db_retry_until_unlocked(LOGFILE, cursor, 
+                                                f'''
+                                                INSERT INTO queue (link)
+                                                VALUES (\'{link}\');
+                                                ''')
         _con.commit()
         _con.close()
         _log(LOGFILE, f"Link \"{link}\" inserted!")
@@ -63,7 +55,9 @@ def webhook():
 if __name__=='__main__':
     _con = sqlite3.connect(DIRECTION + 'queue.db')
     cursor = _con.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS queue
-               (link text)''')
+    db_retry_until_unlocked(LOGFILE, cursor,'''
+                                            CREATE TABLE IF NOT EXISTS queue
+                                            (link text);
+                                            ''')
     _con.commit()
     app.run()
