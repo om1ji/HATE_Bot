@@ -1,6 +1,7 @@
 from datetime import datetime
 import inspect
 import sqlite3
+from time import sleep
 
 def _dbgl():
     """
@@ -35,7 +36,7 @@ def db_retry_until_unlocked(logfile, cur, cmd: str, time = 2, max_retries = 10):
             except sqlite3.OperationalError:
                 _log(logfile, f"[{retry_count}]Database is locked, reattempting again in {time} seconds...", 2)
                 retry_count += 1
-                time.sleep(2)
+                sleep(time)
         else:
             _log(logfile, f"======Reached max retries ({max_retries}), breaking")
             raise ValueError("Reached max retries")
