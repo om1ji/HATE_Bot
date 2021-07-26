@@ -3,15 +3,17 @@
 ###########################
 
 # Directory for all the files 
-DIRECTORY: "/home/bot/HATE/"
+DIRECTORY: ""
 # Your bot token, acquired through @BotFather
-TOKEN: "1591601193:AAHWLplYpkAPwbwq7c-0A51169BQpf9N04s"
+TOKEN: ""
 # Channel IDs, where MAIN_CHAT_ID is your main channel,
 # where all the final posts will be made, and 
 # TEMP_CHAT_ID is your temporary channel.
-MAIN_CHAT_ID: "-1001389676477"
-TEMP_CHAT_ID: "-1001170446896"
-
+MAIN_CHAT_ID: ""
+TEMP_CHAT_ID: ""
+# Admin ids, used for reporting errors. At least 1 id is needed
+ADMINS:
+  - ""
 
 
 #########################
@@ -21,6 +23,7 @@ TEMP_CHAT_ID: "-1001170446896"
 #########################
 results_dir: "tmp/"
 queue_name: "queue.db"
+LOGFILE: "downloader-log.txt"
 create_logs: 1
 
 # REGEXES:
