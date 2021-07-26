@@ -6,7 +6,7 @@ import json
 import sqlite3
 import time
 import requests
-from subprocess import check_output
+from subprocess import PIPE, check_output, run
 import yaml
 
 import telebot
@@ -21,8 +21,9 @@ RESULT_DIR = DIRECTION + 'tmp/'
 QUEUE_DIR = DIRECTION + 'queue.db'
 LOGFILE = DIRECTION + "downloader-log.txt"
 TOKEN = CONFIG['TOKEN']
-CHAT_ID = -1001389676477
-TMP_CHAT_ID = -1001170446896
+CHAT_ID = CONFIG['MAIN_CHAT_ID']
+TMP_CHAT_ID = CONFIG['TEMP_CHAT_ID']
+ADMINS = CONFIG['ADMINS']
 BOT = telebot.TeleBot(TOKEN)
 
 def download_from_queue(QUEUE_DIR):
@@ -33,20 +34,31 @@ def download_from_queue(QUEUE_DIR):
     empty_check = False
     while True:
         os.chdir(DIRECTION)
-        db_retry_until_unlocked(LOGFILE, cur, "SELECT * FROM queue;")
-        current_link = cur.fetchone()
+        current_link = db_retry_until_unlocked(LOGFILE, QUEUE_DIR, "SELECT * FROM queue;")
         if current_link:
-            db_retry_until_unlocked(LOGFILE, cur, """SELECT rowid FROM queue;""")
-            current_rowid = cur.fetchone()[0]
+            current_link = current_link[0][0]
+            current_rowid = db_retry_until_unlocked(LOGFILE, QUEUE_DIR, """SELECT rowid FROM queue;""")[0][0]
             
             empty_check = False
-            current_link = current_link[0]
             _log(LOGFILE, f"Fetched link: {current_rowid}|{current_link}, running downloading....")
             # Run downloading
-            os.system(f"""youtube-dl -x {current_link} \
-                        --audio-format mp3 --audio-quality 0 --no-part \
-                        --write-description -o "./tmp/%(id)s/%(title)s-%(id)s.%(ext)s" \
-                        --write-thumbnail""")
+            ytdl_result = run(f"""youtube-dl -x {current_link} \
+                                  --audio-format mp3 --audio-quality 0 --no-part \
+                                  --write-description -o "./tmp/%(id)s/%(title)s-%(id)s.%(ext)s" \
+                                  --write-thumbnail""", 
+                                  shell = True, 
+                                  stdout=PIPE,
+                                  stderr=PIPE)
+            
+            ytdl_stdout = ytdl_result.stdout.decode('utf-8').strip()
+            ytdl_stderr = ytdl_result.stderr.decode('utf-8').strip()
+            # Removes '[download] ...' lines as they are repeated and flood the logs
+            _log(LOGFILE, "STDOUT: " + re.sub(r'\[download\]\s+\d+\.\d% of \d\.\d+.{3} at\s+\d+\.\d+.{3}\/s ETA \d+:\d+\n',
+                                               '', ytdl_stdout)
+                      + "\nSTDERR: " + ytdl_stderr, 1)
+            if ytdl_stderr:
+                for admin in ADMINS:
+                    BOT.send_message(admin, f"!youtube-dl has encountered an error, stderr: {ytdl_stderr}")
             _log(LOGFILE, "Downloading finished!", 1)
             folder = RESULT_DIR + current_link[-11:] + '/' #Путь до папки
             os.chdir(folder)
@@ -62,10 +74,14 @@ def download_from_queue(QUEUE_DIR):
             try:
                 thumb_conv = Image.open(folder + basename + '.webp')
                 thumb_conv.save(folder + basename + '.jpg', 'jpeg')
+                thumbnail = {'document': open(folder + basename + '.jpg', 'rb')}
             except FileNotFoundError:
-                _log(LOGFILE, "jpg already exists!", 2)
-
-            thumbnail = {'document': open(folder + basename + '.jpg', 'rb')}
+                try:
+                    thumb_conv = Image.open(folder + basename + '.jpg')
+                    thumbnail = {'document': open(folder + basename + '.jpg', 'rb')}
+                except FileNotFoundError:
+                    _log("!!!!!Thumbnail did not download properly, using black pic")
+            
 
             _log(LOGFILE, "Sending to temp channel...", 1)
             the_file = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=single_file)
@@ -115,9 +131,9 @@ def download_from_queue(QUEUE_DIR):
             shutil.rmtree(folder)
             _log(LOGFILE, f"Directory {folder} removed", 1)
 
-            db_retry_until_unlocked(LOGFILE, cur, f"""DELETE FROM queue
-                        WHERE rowid={current_rowid};
-                        """)
+            db_retry_until_unlocked(LOGFILE, QUEUE_DIR, f"""DELETE FROM queue
+                                                            WHERE rowid={current_rowid};
+                                                            """)
 
             _con.commit()
             _log(LOGFILE, f"Row {current_rowid} deleted from the db", 1)
