@@ -74,14 +74,14 @@ def get_artist(name):
 def get_title(name):
     title_raw = re.search(r"(?: - )(.+)(?:\[)", name)
     if title_raw == None:
-        title_raw = re.search(r"(?: - )(.+)(?:-\d{11}\.\.?description)$", name)
+        title_raw = re.search(r"(?: - )(.+)(?:-[a-zA-Z0-9_\-]{11}\.\.?description)$", name)
         if title_raw == None:
             return "bruhbruhburbrbh"
     title = title_raw.group(1).strip()
     return title
 
 def get_orig_link(name):
-    orig_link_raw = re.search(r"([a-zA-Z0-9_-]{11})(?:\.\.?description)$", name)
+    orig_link_raw = re.search(r"([a-zA-Z0-9_\-]{11})(?:\.\.?description)$", name)
     orig_link = orig_link_raw.group(1).strip()
     return "https://youtu.be/" + orig_link
     
@@ -165,11 +165,11 @@ def hash_artist(artist):
     res = ''
     for sp in splitted:
         if re.search(r'\D', sp):
-            res = res + '#' + re.sub(r'[-\. ]', '_', sp) + ' '
+            res = res + '#' + re.sub(r'[-\. ]', '_', sp).strip('_') + ' '
         else:
-            res = res + '#The_' + re.sub(r'[-\. ]', '_', sp) + ' '
+            res = res + '#The_' + re.sub(r'[-\. ]', '_', sp).strip('_') + ' '
             
-    return res.strip('_')
+    return res
 
 
 
