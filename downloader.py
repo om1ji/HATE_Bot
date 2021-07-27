@@ -17,9 +17,9 @@ from utils import _log, db_retry_until_unlocked
 
 DIRECTION = r'/home/bot/HATE/'
 CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
-RESULT_DIR = DIRECTION + 'tmp/'
-QUEUE_DIR = DIRECTION + 'queue.db'
-LOGFILE = DIRECTION + "downloader-log.txt"
+RESULT_DIR = CONFIG['results_dir']
+QUEUE_DIR = DIRECTION + CONFIG['queue_name']
+LOGFILE = DIRECTION + CONFIG['downloader_logfile']
 TOKEN = CONFIG['TOKEN']
 CHAT_ID = CONFIG['MAIN_CHAT_ID']
 TMP_CHAT_ID = CONFIG['TEMP_CHAT_ID']

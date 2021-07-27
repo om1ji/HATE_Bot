@@ -23,8 +23,9 @@ ADMINS:
 #########################
 results_dir: "tmp/"
 queue_name: "queue.db"
-LOGFILE: "downloader-log.txt"
 create_logs: 1
+downloader_logfile: "downloader-log.txt"
+server_linux_logfile: "server_linux-log.txt"
 
 # REGEXES:
 re_original_link: "([a-zA-Z0-9_-]{11})(?:\.\.?description)$"
