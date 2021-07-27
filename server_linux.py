@@ -1,5 +1,6 @@
 import re
 import sqlite3
+import yaml
 
 from flask import Flask, request
 
@@ -9,8 +10,9 @@ from utils import _log, db_retry_until_unlocked
 app = Flask(__name__)
 
 DIRECTION = r'/home/bot/HATE/'
-LOGFILE = DIRECTION + "server_linux-log.txt"
-
+CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
+LOGFILE = DIRECTION + CONFIG['server_linux_logfile']
+QUEUE_DIR = DIRECTION + CONFIG['queue_name']
 #================================================================
 
 def extract_link(raw):
@@ -33,31 +35,19 @@ def webhook():
             return request.args.get('hub.challenge', '')
 
     elif request.method == 'POST':
-        _con = sqlite3.connect(DIRECTION + 'queue.db')
-        cursor = _con.cursor()
-
         _log(LOGFILE, "Incoming webhook with following data: " + str(request.data))
         link = extract_link(request.data)
 
-        _con = sqlite3.connect(DIRECTION + 'queue.db')
-        cursor = _con.cursor()
-
-        db_retry_until_unlocked(LOGFILE, cursor, 
-                                                f'''
-                                                INSERT INTO queue (link)
-                                                VALUES (\'{link}\');
-                                                ''')
-        _con.commit()
-        _con.close()
+        db_retry_until_unlocked(LOGFILE, QUEUE_DIR, f'''
+                                                     INSERT INTO queue (link)
+                                                     VALUES (\'{link}\');
+                                                     ''')
         _log(LOGFILE, f"Link \"{link}\" inserted!")
         return '200'
 
 if __name__=='__main__':
-    _con = sqlite3.connect(DIRECTION + 'queue.db')
-    cursor = _con.cursor()
-    db_retry_until_unlocked(LOGFILE, cursor,'''
-                                            CREATE TABLE IF NOT EXISTS queue
-                                            (link text);
-                                            ''')
-    _con.commit()
+    db_retry_until_unlocked(LOGFILE, QUEUE_DIR, '''
+                                                CREATE TABLE IF NOT EXISTS queue
+                                                (link text);
+                                                ''')
     app.run()
