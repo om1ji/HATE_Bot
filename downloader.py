@@ -28,8 +28,6 @@ BOT = telebot.TeleBot(TOKEN)
 
 def download_from_queue(QUEUE_DIR):
     _log(LOGFILE, "====Running downloading on queue db: " + QUEUE_DIR + "====")
-    _con = sqlite3.connect(QUEUE_DIR)
-    cur = _con.cursor() 
     counter = 0
     empty_check = False
     while True:
@@ -107,17 +105,19 @@ def download_from_queue(QUEUE_DIR):
             _log(LOGFILE, f"File path: {file_path}; File id: {file_id}; Message id: {message_id}", 2)
             file_itself = requests.get(f'https://api.telegram.org/file/bot{TOKEN}/{file_path}')
 
+            orig_video_title = check_output(f'youtube-dl -s -e {current_link}', shell=True).decode('utf-8').strip()
+            prepared_title = orig_video_title + basename[-12:] + '.description'
             channel_name = json.loads(check_output(f'youtube-dl -s -J {current_link}', shell=True))['uploader']
             if channel_name == 'HATE LAB':
-                caption = get_final_caption(basename + '.description', read_track_descr) + '\n' + '#HATE_LAB'
+                caption = get_final_caption(prepared_title, read_track_descr) + '\n' + '#HATE_LAB'
             else: 
-                caption = get_final_caption(basename + '.description', read_track_descr)
+                caption = get_final_caption(prepared_title, read_track_descr)
 
             _log(LOGFILE, f"Caption: {caption}", 2)
             BOT.send_audio(CHAT_ID, audio=file_itself.content, 
                                     caption=caption, 
-                                    performer=get_artist(basename + '.description'), 
-                                    title=get_title(basename + '.description'),
+                                    performer=get_artist(prepared_title), 
+                                    title=get_title(prepared_title),
                                     thumb=thumb_id,
                                     duration=duration,
                                     parse_mode='HTML')
@@ -135,7 +135,6 @@ def download_from_queue(QUEUE_DIR):
                                                             WHERE rowid={current_rowid};
                                                             """)
 
-            _con.commit()
             _log(LOGFILE, f"Row {current_rowid} deleted from the db", 1)
             counter += 1
             _log(LOGFILE, f"=CYCLE {counter} FINISHED=" , 1)
