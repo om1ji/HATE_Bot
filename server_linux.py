@@ -18,14 +18,13 @@ QUEUE_DIR = DIRECTION + CONFIG['queue_name']
 def extract_link(raw):
     raw = raw.decode('utf-8')
     matches = re.search(r"(?<=\<yt\:videoId\>).+(?=\<\/yt\:videoId\>)", raw)
-    link = matches.group(0).strip()
-    return link
+    return matches.group(0).strip()
 
 def extract_channel_name(raw):
     raw = raw.decode('utf-8')
     matches = re.search(r"(?<=\<\name\>).+(?=\</\name\>)", raw)
-    link = matches.group(0).strip()
-    return link    
+    return matches.group(0).strip()
+      
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -42,7 +41,7 @@ def webhook():
                                                      INSERT INTO queue (link)
                                                      VALUES (\'{link}\');
                                                      ''')
-        _log(LOGFILE, f"Link \"{link}\" inserted!")
+        _log(LOGFILE, f"Link \"{link}\" from {extract_link} inserted!")
         return '200'
 
 if __name__=='__main__':
