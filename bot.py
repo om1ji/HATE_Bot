@@ -3,8 +3,11 @@ from telebot import types
 import sqlite3
 import requests
 import os
+import yaml
 
-TOKEN = '1801374241:AAH5NsIApYX3L0U9IvVLSGQ0G6Bsd8k4iRc'
+DIRECTION = r'/home/bot/HATE/'
+CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
+TOKEN = CONFIG['TOKEN']
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
