@@ -17,7 +17,7 @@ from utils import _log, db_retry_until_unlocked
 
 DIRECTION = r'/home/bot/HATE/'
 CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
-RESULT_DIR = CONFIG['results_dir']
+RESULT_DIR = DIRECTION + CONFIG['results_dir']
 QUEUE_DIR = DIRECTION + CONFIG['queue_name']
 LOGFILE = DIRECTION + CONFIG['downloader_logfile']
 TOKEN = CONFIG['TOKEN']
@@ -51,7 +51,7 @@ def download_from_queue(QUEUE_DIR):
             ytdl_stdout = ytdl_result.stdout.decode('utf-8').strip()
             ytdl_stderr = ytdl_result.stderr.decode('utf-8').strip()
             # Removes '[download] ...' lines as they are repeated and flood the logs
-            _log(LOGFILE, "STDOUT: " + re.sub(r'\[download\]\s+\d+\.\d% of \d\.\d+.{3} at\s+\d+\.\d+.{3}\/s ETA \d+:\d+\n',
+            _log(LOGFILE, "STDOUT: " + re.sub(r'\[download\]\s+\d*\.\d% of \d\.\d+.{3} at\s+\d+\.\d+.{3}\/s ETA \d+:\d+\n',
                                                '', ytdl_stdout)
                       + "\nSTDERR: " + ytdl_stderr, 1)
             if ytdl_stderr:
@@ -61,7 +61,7 @@ def download_from_queue(QUEUE_DIR):
             folder = RESULT_DIR + current_link[-11:] + '/' #Путь до папки
             os.chdir(folder)
             basename = os.path.splitext(os.listdir()[0])[0]
-
+            
             track_descr_path = folder + basename + '.description' #Путь до файла .description
             track_descr = open(track_descr_path)
             read_track_descr = track_descr.read()
