@@ -26,7 +26,7 @@ TMP_CHAT_ID = CONFIG['TEMP_CHAT_ID']
 ADMINS = CONFIG['ADMINS']
 BOT = telebot.TeleBot(TOKEN)
 
-def download_from_queue(QUEUE_DIR):
+def download_from_queue(QUEUE_DIR: str) -> None:
     _log(LOGFILE, "====Running downloading on queue db: " + QUEUE_DIR + "====")
     counter = 0
     empty_check = False
@@ -61,7 +61,7 @@ def download_from_queue(QUEUE_DIR):
             folder = RESULT_DIR + current_link[-11:] + '/' #Путь до папки
             os.chdir(folder)
             basename = os.path.splitext(os.listdir()[0])[0]
-            
+
             track_descr_path = folder + basename + '.description' #Путь до файла .description
             track_descr = open(track_descr_path)
             read_track_descr = track_descr.read()

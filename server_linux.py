@@ -15,12 +15,12 @@ LOGFILE = DIRECTION + CONFIG['server_linux_logfile']
 QUEUE_DIR = DIRECTION + CONFIG['queue_name']
 #================================================================
 
-def extract_link(raw):
+def extract_link(raw: bytes) -> str:
     raw = raw.decode('utf-8')
     matches = re.search(r"(?<=\<yt\:videoId\>).+(?=\<\/yt\:videoId\>)", raw)
     return matches.group(0).strip()
 
-def extract_channel_name(raw):
+def extract_channel_name(raw: bytes) -> str:
     raw = raw.decode('utf-8')
     matches = re.search(r"(?<=\<\name\>).+(?=\</\name\>)", raw)
     return matches.group(0).strip()

@@ -17,7 +17,7 @@ import inspect
 
 #Берёт название с самого релиза/альбома, для метаданных
 
-def get_album_title(desc):
+def get_album_title(desc: str) -> str:
    #Title
    title_raw = re.search(r"(Title: )(.*)", desc)
    title = title_raw.group(2).strip()
@@ -27,7 +27,7 @@ def get_album_title(desc):
     ОЧЕНЬ ВАЖНО!! В аргумент функций artist, title и orig_link подаётся НАЗВАНИЕ описания, а не его содержимое
 """
 
-def get_upload_type(desc):
+def get_upload_type(desc: str) -> int:
     """
     Returns the upload type of the video:
     1- regular release
@@ -45,7 +45,7 @@ def get_upload_type(desc):
             return 3 
         
 
-def get_podcast_info(desc):
+def get_podcast_info(desc: str) -> str:
     _podcast_descr_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', desc)
     _podcast_descr = _podcast_descr_raw.group(1).strip()
     _podcast_author = _podcast_descr_raw.group(2).strip()
@@ -57,7 +57,7 @@ def get_podcast_info(desc):
     
     return _podcast_descr, _podcast_author, _soundcloud
 
-def get_artist(name):
+def get_artist(name: str) -> str:
     #Artist
     artist_raw = re.search(r"(.+)(?: ?- )", name)
     if artist_raw == None:
@@ -71,7 +71,7 @@ def get_artist(name):
         remixer = remixer.replace("None", "") #please never do this
     return artist + remixer
 
-def get_title(name):
+def get_title(name: str) -> str:
     title_raw = re.search(r"(?: - )(.+)(?:\[)", name)
     if title_raw == None:
         title_raw = re.search(r"(?: - )(.+)(?:-[a-zA-Z0-9_\-]{11}\.\.?description)$", name)
@@ -80,13 +80,13 @@ def get_title(name):
     title = title_raw.group(1).strip()
     return title
 
-def get_orig_link(name):
+def get_orig_link(name: str) -> str:
     orig_link_raw = re.search(r"([a-zA-Z0-9_\-]{11})(?:\.\.?description)$", name)
     orig_link = orig_link_raw.group(1).strip()
     return "https://youtu.be/" + orig_link
     
 
-def get_label(desc):
+def get_label(desc: str) -> str:
     #Label
     label_raw = re.search(r"(Label: )(.*)", desc)
     if label_raw == None:
@@ -101,7 +101,7 @@ def get_label(desc):
     
     return '#' + label.strip('_')
 
-def get_catalogue(name):
+def get_catalogue(name: str) -> str:
     #Catalogue
     catalogue_raw = re.search(r"\[(.+)\]", name)
     if catalogue_raw == None:
@@ -122,7 +122,7 @@ def get_catalogue(name):
 
         # print("{}: {}".format(_dbgl(), str(style)))
 
-def get_style(desc):
+def get_style(desc: str) -> str:
     style_raw = re.search(r"(Style: )(.*)", desc)
 
     if style_raw == None:
@@ -138,7 +138,7 @@ def get_style(desc):
             res = res + out + " "
         return res.strip('_')
 
-def get_support_links(desc):
+def get_support_links(desc: str) -> str:
     reg = re.compile(r"(?:https?:\/\/(?:\S| )*$)(?=[\s\S]+^Artist)", re.M)
     support_links_raw = reg.search(desc)
     
@@ -149,7 +149,7 @@ def get_support_links(desc):
         return support_links
 
 
-def _splitter(inp):
+def _splitter(inp: str) -> str:
     if inp.find("|") != -1:
         splitted = inp.split("|")
         return splitted
@@ -160,7 +160,7 @@ def _splitter(inp):
         splitted = inp.split(" ")
         return splitted
 
-def hash_artist(artist):
+def hash_artist(artist: str) -> str:
     splitted = artist.split('&')
     res = ''
     for sp in splitted:
@@ -173,7 +173,7 @@ def hash_artist(artist):
 
 
 
-def get_final_caption(descr_name, descr_contents, debug_toggle=0):
+def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> str:
     """
         Get final post caption
         :param descr_name: name of description file 
@@ -205,7 +205,7 @@ def get_final_caption(descr_name, descr_contents, debug_toggle=0):
     return final
 
 
-def get_metadata(description):
+def get_metadata(description: str) -> set:
     output_set = []
     output_set.append(get_artist(description))
     output_set.append(get_title(description))
@@ -214,7 +214,7 @@ def get_metadata(description):
 
 
 
-def _tests():
+def _tests() -> None:
     """
         тестики от артеметры, не трогать
     """
