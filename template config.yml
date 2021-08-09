@@ -18,14 +18,22 @@ ADMINS:
 
 #########################
 # All of the parameters below are optional,
-# but are recommended to being configured.
+# but are recommended to be configured.
 # Default values are provided.
 #########################
 results_dir: "tmp/"
 queue_name: "queue.db"
-create_logs: 1
+create_logs: True
 downloader_logfile: "downloader-log.txt"
 server_linux_logfile: "server_linux-log.txt"
+# Currently, telegram bots have a 20 MB upload limitation
+# for new files. If skip_if_over_20mb is False, 
+# the bot will send the admins a message and you will
+# have to upload the audio file manually to the temporary 
+# channel. Then, the bot will parse that message and continue 
+# as usual. If skip_if_over_20mb is True, the bot will 
+# delete the folder and remove the link from the queue.
+skip_if_over_20mb: True
 
 # REGEXES:
 re_original_link: "([a-zA-Z0-9_-]{11})(?:\.\.?description)$"
