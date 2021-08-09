@@ -47,6 +47,6 @@ def webhook():
 if __name__=='__main__':
     db_retry_until_unlocked(LOGFILE, QUEUE_DIR, '''
                                                 CREATE TABLE IF NOT EXISTS queue
-                                                (link text);
+                                                (link text UNIQUE);
                                                 ''')
     app.run()
