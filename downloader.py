@@ -122,6 +122,9 @@ def download_from_queue(QUEUE_DIR: str) -> None:
 
             _log(LOGFILE, f"Caption: {caption.replace('\n', '\\n')}", 2)
 
+            
+            #Sends the file. Простите, мне нужно что то коммитнуть для статистики 👉👈
+            
             BOT.send_audio(CHAT_ID, audio=audio_from_temp.content, 
                                     caption=caption, 
                                     performer=get_artist(prepared_title), 
