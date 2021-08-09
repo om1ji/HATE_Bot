@@ -10,12 +10,12 @@ def _dbgl() -> int:
     """
     return inspect.currentframe().f_back.f_lineno
 
-def _log(file: str, text: str, tabbing = 0):
+def _log(file: str, text: str, tabbing = 0) -> None:
     print("[{}]{} {}".format(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3], "\t"*tabbing, text))
     with open(file, 'a', encoding='utf-8') as f:
         f.write("[{}]{} {}\n".format(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3], "\t"*tabbing, text))
 
-def db_retry_until_unlocked(logfile: str, directory: str, cmd: str, sleep_time = 2, max_retries = 10):
+def db_retry_until_unlocked(logfile: str, directory: str, cmd: str, sleep_time = 2, max_retries = 10) -> None:
     """
     Handles the 'database is locked' exception
     and tries to execute the function until the db
