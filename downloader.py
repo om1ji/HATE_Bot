@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import shutil
 import json
 import sqlite3
@@ -13,7 +14,7 @@ import telebot
 from PIL import Image
 
 from regex import *
-from utils import _log, db_retry_until_unlocked
+from utils import _log, db_retry_until_unlocked as dbret, notify_admins
 
 DIRECTION = r'/home/bot/HATE/'
 CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
@@ -25,6 +26,7 @@ BOT = telebot.TeleBot(TOKEN)
 CHAT_ID = CONFIG['MAIN_CHAT_ID']
 TMP_CHAT_ID = CONFIG['TEMP_CHAT_ID']
 ADMINS = CONFIG['ADMINS']
+SKIP_IF_OVER_20MB = CONFIG['skip_if_over_20mb']
 API = 'https://api.telegram.org'
 
 def download_from_queue(QUEUE_DIR: str) -> None:
@@ -33,19 +35,18 @@ def download_from_queue(QUEUE_DIR: str) -> None:
     _empty_check = False
     while True:
         os.chdir(DIRECTION)
-        current_link = db_retry_until_unlocked(LOGFILE, QUEUE_DIR, "SELECT * FROM queue;")
+        current_link = dbret(LOGFILE, QUEUE_DIR, "SELECT * FROM queue;")
         # If the queue isn't empty, download the contents
         if current_link:
             _empty_check = False
             current_link = current_link[0][0]
-            current_rowid = db_retry_until_unlocked(LOGFILE, QUEUE_DIR, """SELECT rowid FROM queue;""")[0][0]
+            current_rowid = dbret(LOGFILE, QUEUE_DIR, """SELECT rowid FROM queue;""")[0][0]
             
             _log(LOGFILE, f"Fetched link: {current_rowid}|{current_link}, running downloading....")
             # Run downloading
             ytdl_result = run(f"""youtube-dl -x {current_link} \
                                   --audio-format mp3 --audio-quality 0 --no-part \
-                                  --write-description -o "./tmp/%(id)s/%(title)s-%(id)s.%(ext)s" \
-                                  --write-thumbnail""", 
+                                  --write-description -o "./tmp/%(id)s/%(title)s-%(id)s.%(ext)s" """, 
                                   shell = True, 
                                   stdout=PIPE,
                                   stderr=PIPE)
@@ -58,10 +59,12 @@ def download_from_queue(QUEUE_DIR: str) -> None:
                       + "\nSTDERR: " + ytdl_stderr, 1)
             # If the stderr of ytdl is not empty, notify the admins: 
             if ytdl_stderr:
-                for admin in ADMINS:
-                    BOT.send_message(admin, f"!youtube-dl has encountered an error, stderr: {ytdl_stderr}")
+                notify_admins(f"!youtube-dl has encountered an error, stderr: {ytdl_stderr}")
+
             
             _log(LOGFILE, "Downloading finished!", 1)
+
+                
             folder = RESULT_DIR + current_link[-11:] + '/' # Path to the folder
             os.chdir(folder)
             # Folder + shared basename for all the files in the folder
@@ -72,25 +75,23 @@ def download_from_queue(QUEUE_DIR: str) -> None:
 
             _log(LOGFILE, f"Folder: {folder}, path to .description file: {fbasename + '.description'}", 1)
             
-            # Try to convert webp thumb to jpg 
-            try:
-                Image.open(fbasename + '.webp').save(fbasename + '.jpg', 'jpeg')
-                thumbnail = {'document': open(fbasename + '.jpg', 'rb')}
-            except FileNotFoundError:
-                try:
-                    thumbnail = {'document': open(fbasename + '.jpg', 'rb')}
-                except FileNotFoundError:
-                    _log("!!!!!Thumbnail did not download properly, using black pic")
-            
             audio_document = {'document': open(fbasename + '.mp3', 'rb')}
 
-            # Send to temporary channel
-            _log(LOGFILE, "Sending to temp channel...", 1)
-            posted_audio = requests.post(f"{API}{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=audio_document)
+            # Gets file size in mb
+            audio_size = os.path.getsize(fbasename + '.mp3')/1e+6
+            if audio_size > 20:
+                if SKIP_IF_OVER_20MB:
+                    notify_admins(f"Skipped sending \"{fbasename[31:]}\" because it is over 20 MB ({audio_size}).")
+                    finish_cycle(track_descr, audio_document, folder, current_rowid, counter)
+                else:
+                    handle_manual_upload(fbasename, audio_size)
+            else:
+                # Send to temporary channel
+                _log(LOGFILE, "Sending to temp channel...", 1)
+                posted_audio = requests.post(f"{API}{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=audio_document)
+            
             posted_thumb = requests.post(f"{API}{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=thumbnail)
-
             message_id = json.loads(posted_audio.text)['result']['message_id']
-            thumb_id = json.loads(posted_thumb.text)['result']['document']['file_id']
             _log(LOGFILE, "thumb result: " + str(json.loads(posted_thumb.text)['result']), 1)
 
             try:
@@ -120,16 +121,15 @@ def download_from_queue(QUEUE_DIR: str) -> None:
             else: 
                 caption = get_final_caption(prepared_title, read_track_descr)
 
-            _log(LOGFILE, f"Caption: {caption.replace('\n', '\\n')}", 2)
-
+            _log(LOGFILE, f"Caption: {caption}", 2)
             
-            #Sends the file. Простите, мне нужно что то коммитнуть для статистики 👉👈
+            #Sends the file
             
             BOT.send_audio(CHAT_ID, audio=audio_from_temp.content, 
                                     caption=caption, 
                                     performer=get_artist(prepared_title), 
                                     title=get_title(prepared_title),
-                                    thumb=thumb_id,
+                                    thumb=thumbnail(current_link),
                                     duration=duration,
                                     parse_mode='HTML')
             _log(LOGFILE, "Audio sent to the main channel!")
@@ -142,23 +142,40 @@ def download_from_queue(QUEUE_DIR: str) -> None:
                 _empty_check = True
             time.sleep(15)
 
-def finish_cycle(track_descr, single_file, folder, current_rowid, counter):
+def handle_manual_upload(fbasename, audio_size):
+    """
+        PLZ write docs so i could understand what you want. ='( artemetra
+    """
+    BOT.send_message(TMP_CHAT_ID, "Send the audio in the next message:")
+    notify_admins( f"""
+                    File \"{fbasename[31:]}\" is {audio_size} MB in size. 
+                    Please send the audio file to the temporary channel under \
+                    bot's message.""")
+
+    _log(LOGFILE, f"Received JSON from manual upload: {resulted_json}", 2)
+    notify_admins(f"Successfully got audio data! Continuing as usual...")
+    return resulted_json
+
+
+def finish_cycle(track_descr, audio_document, folder, current_rowid, counter):
         track_descr.close()
-        single_file['document'].close()
+        audio_document['document'].close()
 
         # BOT.delete_message(TMP_CHAT_ID, message_id)
         # _log(LOGFILE, "Message deleted from temp channel", 1)
         shutil.rmtree(folder)
         _log(LOGFILE, f"Directory {folder} removed", 1)
 
-        db_retry_until_unlocked(LOGFILE, QUEUE_DIR, f"""DELETE FROM queue
-                                                        WHERE rowid={current_rowid};
-                                                        """)
+        dbret(LOGFILE, QUEUE_DIR, f"""
+                                   DELETE FROM queue
+                                   WHERE rowid={current_rowid};
+                                   """)
 
         _log(LOGFILE, f"Row {current_rowid} deleted from the db", 1)
         counter += 1
         _log(LOGFILE, f"=CYCLE {counter} FINISHED=" , 1)
 
-
 if __name__ == '__main__':
     download_from_queue(QUEUE_DIR)
+
+# TODO if file > 20 mb: handle...() 
