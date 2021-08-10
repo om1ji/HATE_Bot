@@ -10,3 +10,4 @@ queue.db-journal
 *.pem
 HATE/
 *.swp
+*.zip
