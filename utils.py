@@ -2,6 +2,15 @@ from datetime import datetime
 import inspect
 import sqlite3
 from time import sleep
+import yaml
+import telebot
+
+DIRECTION = r'/home/bot/HATE/'
+CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
+TOKEN = CONFIG['TOKEN']
+BOT = telebot.TeleBot(TOKEN)
+ADMINS = CONFIG['ADMINS']
+
 
 def _dbgl() -> int:
     """
@@ -46,6 +55,16 @@ def db_retry_until_unlocked(logfile: str, directory: str, cmd: str, sleep_time =
     fetched = cur.fetchall()
     con.close()
     return fetched
+
+def notify_admins(text: str) -> None:
+    """
+    Notifies all admins with a text
+    and logs it.
+    :param text: text to send
+    """
+    for admin in ADMINS:
+        BOT.send_message(admin, text)
+    _log(text)
 
 if __name__ == '__main__':
     """Tests"""
