@@ -1,4 +1,6 @@
-import re, os
+import re
+import os
+from subprocess import check_output
 import random
 import inspect
 
@@ -212,7 +214,11 @@ def get_metadata(description: str) -> set:
     output_set.append(get_catalogue(description))
     return output_set 
 
-
+def thumbnail(link):
+    # Extracts the  a f f o r d a b l e thumbnail link for uploading Audio to Telegram.
+    regex = r"2\s+246\s+138\s+(.+)\\n3"
+    output = str(check_output(f'youtube-dl -s --list-thumbnails {link}'))[2:-3]
+    return re.search(regex, output).group(1)
 
 def _tests() -> None:
     """
