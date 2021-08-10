@@ -9,3 +9,4 @@ config.yml
 queue.db-journal
 *.pem
 HATE/
+*.swp
