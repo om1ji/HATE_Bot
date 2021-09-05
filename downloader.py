@@ -4,14 +4,13 @@ import os
 import re
 import shutil
 import json
-import sqlite3
 import time
 import requests
 from subprocess import PIPE, check_output, run
 import yaml
+from io import BufferedReader, TextIOWrapper # for parameter types
 
 import telebot
-from PIL import Image
 
 from regex import *
 from utils import _log, db_retry_until_unlocked as dbret, notify_admins
@@ -27,7 +26,7 @@ CHAT_ID = CONFIG['MAIN_CHAT_ID']
 TMP_CHAT_ID = CONFIG['TEMP_CHAT_ID']
 ADMINS = CONFIG['ADMINS']
 SKIP_IF_OVER_20MB = CONFIG['skip_if_over_20mb']
-API = 'https://api.telegram.org'
+API = 'https://api.telegram.org/'
 
 def download_from_queue(QUEUE_DIR: str) -> None:
     _log(LOGFILE, "====Running downloading on queue db: " + QUEUE_DIR + "====")
@@ -86,13 +85,11 @@ def download_from_queue(QUEUE_DIR: str) -> None:
                 else:
                     handle_manual_upload(fbasename, audio_size)
             else:
-                # Send to temporary channel
+                # Send to temporary channel 
                 _log(LOGFILE, "Sending to temp channel...", 1)
-                posted_audio = requests.post(f"{API}{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=audio_document)
+                posted_audio = requests.post(f"{API}bot{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=audio_document)
             
-            posted_thumb = requests.post(f"{API}{TOKEN}/sendDocument?chat_id={TMP_CHAT_ID}", files=thumbnail)
             message_id = json.loads(posted_audio.text)['result']['message_id']
-            _log(LOGFILE, "thumb result: " + str(json.loads(posted_thumb.text)['result']), 1)
 
             try:
                 _log(LOGFILE, "Result: " + str(json.loads(posted_audio.text)), 1)
@@ -124,16 +121,15 @@ def download_from_queue(QUEUE_DIR: str) -> None:
             _log(LOGFILE, f"Caption: {caption}", 2)
             
             #Sends the file
-            
             BOT.send_audio(CHAT_ID, audio=audio_from_temp.content, 
                                     caption=caption, 
                                     performer=get_artist(prepared_title), 
                                     title=get_title(prepared_title),
-                                    thumb=thumbnail(current_link),
+                                    thumb=get_thumbnail(current_link),
                                     duration=duration,
                                     parse_mode='HTML')
             _log(LOGFILE, "Audio sent to the main channel!")
-
+            
             finish_cycle(track_descr, audio_document, folder, current_rowid, counter)
 
         else:
@@ -151,13 +147,16 @@ def handle_manual_upload(fbasename, audio_size):
                     File \"{fbasename[31:]}\" is {audio_size} MB in size. 
                     Please send the audio file to the temporary channel under \
                     bot's message.""")
-
+    resulted_json = '' # This line is just a placeholder, feature not implemented yet
     _log(LOGFILE, f"Received JSON from manual upload: {resulted_json}", 2)
     notify_admins(f"Successfully got audio data! Continuing as usual...")
     return resulted_json
 
 
-def finish_cycle(track_descr, audio_document, folder, current_rowid, counter):
+def finish_cycle(track_descr: TextIOWrapper, 
+                audio_document: dict[str, BufferedReader], 
+                folder, current_rowid, counter):
+        
         track_descr.close()
         audio_document['document'].close()
 
