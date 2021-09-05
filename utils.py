@@ -10,6 +10,7 @@ CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
 TOKEN = CONFIG['TOKEN']
 BOT = telebot.TeleBot(TOKEN)
 ADMINS = CONFIG['ADMINS']
+LOGFILE = DIRECTION + CONFIG['downloader_logfile']
 
 
 def _dbgl() -> int:
@@ -24,7 +25,10 @@ def _log(file: str, text: str, tabbing = 0) -> None:
     with open(file, 'a', encoding='utf-8') as f:
         f.write("[{}]{} {}\n".format(str(datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))[:-3], "\t"*tabbing, text))
 
-def db_retry_until_unlocked(logfile: str, directory: str, cmd: str, sleep_time = 2, max_retries = 10) -> None:
+class ReachedMaxRetriesError(Exception):
+    pass
+
+def db_retry_until_unlocked(logfile: str, directory: str, cmd: str, sleep_time = 2, max_retries = 10) -> list:
     """
     Handles the 'database is locked' exception
     and tries to execute the function until the db
@@ -51,7 +55,7 @@ def db_retry_until_unlocked(logfile: str, directory: str, cmd: str, sleep_time =
                 sleep(sleep_time)
         else:
             _log(logfile, f"======Reached max retries ({max_retries}), breaking")
-            raise ValueError("Reached max retries")
+            raise ReachedMaxRetriesError("Reached max retries")
     fetched = cur.fetchall()
     con.close()
     return fetched
@@ -64,7 +68,7 @@ def notify_admins(text: str) -> None:
     """
     for admin in ADMINS:
         BOT.send_message(admin, text)
-    _log(text)
+    _log(LOGFILE, text)
 
 if __name__ == '__main__':
     """Tests"""
