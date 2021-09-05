@@ -2,12 +2,21 @@ import re
 import os
 from subprocess import check_output
 import random
-import inspect
 
+import utils
 """
     Важно! Отправлять аргумент в виде открытого и прочитанного файла
 
 """
+
+#### Compiling regexes
+RE_TITLE = re.compile(r"(Title: )(.*)", re.I)
+RE_TYPE_PODCAST = re.compile(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', re.I)
+RE_TYPE_REGULAR = re.compile(r'(Artists?: |Title: |Label: |Genre: )', re.I)
+RE_SOUNDCLOUD = re.compile(r'Download.+:\n.+', re.I)
+RE_ARTIST = re.compile(r"(.+)(?: ?- )")
+RE_REMIX = re.compile(r"(?<=\()(.+)(?= Remix\))|(?<=\()(.+)(?= Edit\))")
+_RE_YT_LINK = r'[a-zA-Z0-9_\-]{11}\.\.?description)$'
 
 #Берёт автора с самого релиза/альбома. Скорее всего уберу:
 
@@ -21,7 +30,7 @@ import inspect
 
 def get_album_title(desc: str) -> str:
    #Title
-   title_raw = re.search(r"(Title: )(.*)", desc)
+   title_raw = re.search(RE_TITLE, desc)
    title = title_raw.group(2).strip()
    return title
 
@@ -32,15 +41,15 @@ def get_album_title(desc: str) -> str:
 def get_upload_type(desc: str) -> int:
     """
     Returns the upload type of the video:
-    1- regular release
+    1 - regular release
     2 - podcast
     3 - special/other/unmathed
     """
-    _type_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', desc)
+    _type_raw = re.search(RE_TYPE_PODCAST, desc)
     if _type_raw != None:
         return 2
     else:
-        _type_raw = re.search(r'(Artists?: |Title: |Label: |Genre: )', desc)
+        _type_raw = re.search(RE_TYPE_REGULAR, desc)
         if _type_raw != None:
             return 1
         else:
@@ -48,10 +57,10 @@ def get_upload_type(desc: str) -> int:
         
 
 def get_podcast_info(desc: str) -> str:
-    _podcast_descr_raw = re.search(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', desc)
+    _podcast_descr_raw = re.search(RE_TYPE_PODCAST, desc)
     _podcast_descr = _podcast_descr_raw.group(1).strip()
     _podcast_author = _podcast_descr_raw.group(2).strip()
-    _soundcloud = re.search(r'Download.+:\n.+', desc).group(0).strip()
+    _soundcloud = re.search(RE_SOUNDCLOUD, desc).group(0).strip()
 
     _podcast_author = re.sub(r'[\[\]\(\)\.]', '', _podcast_author)
     _podcast_author = _podcast_author.replace(' ', '_')
@@ -61,11 +70,13 @@ def get_podcast_info(desc: str) -> str:
 
 def get_artist(name: str) -> str:
     #Artist
-    artist_raw = re.search(r"(.+)(?: ?- )", name)
+    artist_raw = re.search(RE_ARTIST, name)
     if artist_raw == None:
+        utils.notify_admins(f"Something went wrong in parsing the artist! Raw = {artist_raw}, using \"Unknown\" as artist ")
         return "Unknown"
     artist = artist_raw.group(1).strip()
-    remixer_raw = re.search('(?<=\()(.+)(?= Remix\))|(?<=\()(.+)(?= Edit\))', name, re.IGNORECASE)
+
+    remixer_raw = re.search(RE_REMIX, name, re.IGNORECASE)
     if remixer_raw == None:
         remixer = ""
     else:
@@ -78,6 +89,7 @@ def get_title(name: str) -> str:
     if title_raw == None:
         title_raw = re.search(r"(?: - )(.+)(?:-[a-zA-Z0-9_\-]{11}\.\.?description)$", name)
         if title_raw == None:
+            utils.notify_admins(f"Something went wrong in parsing the title! title_raw = {title_raw}s")
             return "bruhbruhburbrbh"
     title = title_raw.group(1).strip()
     return title
@@ -91,7 +103,7 @@ def get_orig_link(name: str) -> str:
 def get_label(desc: str) -> str:
     #Label
     label_raw = re.search(r"(Label: )(.*)", desc)
-    if label_raw == None:
+    if label_raw == None or re.search(r"\d{7}_Records_DK"):
         return '-'
     label = label_raw.group(2).strip()
     label = re.sub(r'[\\/\(\)\[\]]', '', label)
@@ -106,6 +118,9 @@ def get_label(desc: str) -> str:
 def get_catalogue(name: str) -> str:
     #Catalogue
     catalogue_raw = re.search(r"\[(.+)\]", name)
+
+                            # removes label names from distrokid,
+                            # as they are unique for each release and are useless
     if catalogue_raw == None:
         return '-'
     catalogue = catalogue_raw.group(1).strip()
@@ -141,15 +156,10 @@ def get_style(desc: str) -> str:
         return res.strip('_')
 
 def get_support_links(desc: str) -> str:
-    reg = re.compile(r"(?:https?:\/\/(?:\S| )*$)(?=[\s\S]+^Artist)", re.M)
-    support_links_raw = reg.search(desc)
-    
-    if support_links_raw == None:
-        return ""
-    else:
-        support_links = support_links_raw.group(0).strip()
-        return support_links
-
+    # reg = re.compile(r"(?:https?:\/\/(?:\S| )*$)(?=[\s\S]+^Artist)", re.M)
+    # support_links_raw = reg.search(desc)
+    support_links = re.search(r"(?:https?:\/\/(?:\S| )*$)(?=[\s\S]+^Artist)", desc)
+    return support_links.group(0).strip() if support_links else ""
 
 def _splitter(inp: str) -> str:
     if inp.find("|") != -1:
@@ -214,10 +224,10 @@ def get_metadata(description: str) -> set:
     output_set.append(get_catalogue(description))
     return output_set 
 
-def thumbnail(link):
-    # Extracts the  a f f o r d a b l e thumbnail link for uploading Audio to Telegram.
+def get_thumbnail(link):
+    """Extracts the  a f f o r d a b l e thumbnail link for uploading Audio to Telegram."""
     regex = r"2\s+246\s+138\s+(.+)\\n3"
-    output = str(check_output(f'youtube-dl -s --list-thumbnails {link}'))[2:-3]
+    output = str(check_output(f'youtube-dl -s --list-thumbnails {link}', shell=True))[2:-3]
     return re.search(regex, output).group(1)
 
 def _tests() -> None:
