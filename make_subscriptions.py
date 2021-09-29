@@ -1,4 +1,3 @@
-from typing import Container 
 from requests import post
 from time import sleep
 
