@@ -2,7 +2,6 @@ from typing import Container
 from requests import post
 from time import sleep
 
-
 url = ["UC6qQOTx9LuKMC5p2dbjmSRg","UCLXM6lFu1s7MjInzUk5bfNA"]
 while True:
     for i in url:
