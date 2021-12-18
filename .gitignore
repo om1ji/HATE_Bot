@@ -1,7 +1,6 @@
 ﻿__pycache__
 queue.db
-test1.py
-test2.py
+test*.py
 tmp/
 downloader-log.txt
 server_linux-log.txt
@@ -11,3 +10,4 @@ queue.db-journal
 HATE/
 *.swp
 *.zip
+*.session*
