@@ -1,19 +1,18 @@
 import re
+import sqlite3
 import yaml
 
 from flask import Flask, request
-app = Flask(__name__)
 
 from regex import *
-from utils import Log, db_retry_until_unlocked
-from ORM import SQL 
+from utils import _log, db_retry_until_unlocked
+
+app = Flask(__name__)
 
 DIRECTION = r'/home/bot/HATE/'
 CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
 LOGFILE = DIRECTION + CONFIG['server_linux_logfile']
 QUEUE_DIR = DIRECTION + CONFIG['queue_name']
-db = SQL(QUEUE_DIR)
-l = Log(LOGFILE)
 #================================================================
 
 def extract_link(raw: bytes) -> str:
@@ -35,14 +34,19 @@ def webhook():
             return request.args.get('hub.challenge', '')
 
     elif request.method == 'POST':
-        l.log(LOGFILE, f"Incoming webhook with following data: {request.data}")
+        _log(LOGFILE, "Incoming webhook with following data: " + str(request.data))
         link = extract_link(request.data)
 
-        db.push_to_queue(link)
-        
-        l.log(LOGFILE, f"Link \"{link}\" from {extract_link} inserted!")
+        db_retry_until_unlocked(LOGFILE, QUEUE_DIR, f'''
+                                                     INSERT INTO queue (link)
+                                                     VALUES (\'{link}\');
+                                                     ''')
+        _log(LOGFILE, f"Link \"{link}\" from {extract_link} inserted!")
         return '200'
 
 if __name__=='__main__':
-    db.create_table()
+    db_retry_until_unlocked(LOGFILE, QUEUE_DIR, '''
+                                                CREATE TABLE IF NOT EXISTS queue
+                                                (link text UNIQUE);
+                                                ''')
     app.run()
