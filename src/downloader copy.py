@@ -13,10 +13,9 @@ from pyrogram import Client
 from ORM import SQL
 import regex_parser as reg
 from utils import Log, db_retry_until_unlocked as dbret, notify_admins
-from bot_stuff import app
+from bot_stuff import bot
+from globals import *
 
-DIRECTION = r'/home/bot/HATE/'
-CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
 RESULT_DIR = DIRECTION + CONFIG['results_dir']
 QUEUE_DIR = DIRECTION + CONFIG['queue_name']
 LOGFILE = DIRECTION + CONFIG['downloader_logfile']
@@ -77,7 +76,7 @@ def prepare_payload(current_link: str, folder, title, uploader):
 
 def post_audio(audio, caption, artist, track_name, thumb):
     """Posts audio and logs it"""
-    msg = app.send_audio(
+    msg = bot.send_audio(
         CHAT_ID,
         audio,
         caption,

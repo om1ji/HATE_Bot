@@ -15,7 +15,7 @@ class SQL:
     def push_to_queue(self, link: str, title: str ="", uploader: str=""):
         with self.db:
             return self.cursor.execute(
-                "INSERT INTO queue (link) VALUES (?, ?, ?);", link
+                "INSERT INTO queue (link) VALUES (?, ?, ?);", link, title, uploader
             )
 
     def fetch_queue(self):

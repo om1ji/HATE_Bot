@@ -1,7 +1,10 @@
-import yaml
+from pyrogram import filters
+from pyrogram.types import Message
 
-from pyrogram import Client, filters
+from globals import *
 
-DIRECTION = r'/home/bot/HATE/'
-CONFIG = yaml.safe_load(open(DIRECTION + 'config.yml', 'r'))
-app = Client("hatebot", CONFIG['API_ID'], CONFIG['API_HASH'], bot_token=CONFIG['TOKEN'])
+@bot.on_message(filters.private)
+async def handle_private_messages(_, message: Message):
+    await bot.send_message(message.from_user.id, "Sorry, i'm not a real bot, i just post in @hatecollective.")
+
+bot.run()

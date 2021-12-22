@@ -1,7 +1,7 @@
 import re
 import os
-from subprocess import check_output
 import random
+from typing import List
 
 import utils
 """
@@ -180,10 +180,7 @@ def hash_artist(artist: str) -> str:
             res = res + '#' + re.sub(r'[-\. ]', '_', sp).strip('_') + ' '
         else:
             res = res + '#The_' + re.sub(r'[-\. ]', '_', sp).strip('_') + ' '
-
     return res
-
-
 
 def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> str:
     """
@@ -213,22 +210,15 @@ def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> s
     else:
         final = ""
 
-
     return final
 
 
-def get_metadata(description: str) -> set:
-    output_set = []
-    output_set.append(get_artist(description))
-    output_set.append(get_title(description))
-    output_set.append(get_catalogue(description))
-    return output_set
-
-def get_thumbnail(link):
-    """Extracts the  a f f o r d a b l e thumbnail link for uploading Audio to Telegram."""
-    regex = r"2\s+246\s+138\s+(.+)\\n3"
-    output = str(check_output(f'youtube-dl -s --list-thumbnails {link}', shell=True))[2:-3]
-    return re.search(regex, output).group(1)
+def get_metadata(description: str) -> List:
+    return [
+        get_artist(description),
+        get_title(description),
+        get_catalogue(description)
+    ]
 
 def _tests() -> None:
     """
