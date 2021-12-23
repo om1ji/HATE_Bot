@@ -1,16 +1,15 @@
 import re
 import os
 import random
-from typing import List
+from typing import List, Union
 
-import utils
+#import utils
 """
     Важно! Отправлять аргумент в виде открытого и прочитанного файла
-
 """
 
 #### Compiling regexes
-RE_TITLE = re.compile(r"(Title: )(.*)", re.I)
+RE_ALBUM_TITLE = re.compile(r"(Title: )(.*)", re.I)
 RE_TYPE_PODCAST = re.compile(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', re.I)
 RE_TYPE_REGULAR = re.compile(r'(Artists?: |Title: |Label: |Genre: )', re.I)
 RE_SOUNDCLOUD = re.compile(r'Download.+:\n.+', re.I)
@@ -18,12 +17,14 @@ RE_ARTIST = re.compile(r"(.+)(?: ?- )")
 RE_REMIX = re.compile(r"(?<=\()(.+)(?= Remix\))|(?<=\()(.+)(?= Edit\))")
 _RE_YT_LINK = r'[a-zA-Z0-9_\-]{11}\.\.?description)$'
 
+
+
 """
     ОЧЕНЬ ВАЖНО!! В аргумент функций artist, title и orig_link подаётся НАЗВАНИЕ описания, а не его содержимое
 """
 
 def get_album_title(desc: str) -> str:
-   ...
+    ...
 
 def get_upload_type(desc: str) -> int:
     ...
@@ -38,19 +39,29 @@ def get_title(name: str) -> str:
     ...
 
 def get_orig_link(name: str) -> str:
-    ...
+    return "https://youtu.be/" + \
+        re.search(r"(.{11})\.\.?description", name).group(1).strip()
 
 def get_label(desc: str) -> str:
-    ...
+    label_raw = re.search(r"(Label: )(.+)", desc)
+    if not label_raw:
+        return "-"
+    label = label_raw.group(2).strip()
+    if re.search(r"\d{7}_Records_DK", label):
+        return "-"
+    
+    return label
 
-def get_catalogue(name: str) -> str:
-    ...
+def get_catalogue(desc: str) -> Union[str, None]:
+    catalogue_raw = re.search(r"(Catalogu?e?: )(.+)", desc)
+    return catalogue_raw.group(2).strip() if catalogue_raw else None
 
 def get_style(desc: str) -> str:
     ...
 
-def get_support_links(desc: str) -> str:
-    ...
+def get_support_link(desc: str) -> str:
+    support_raw = re.search(r"https?:\/\/\S+", desc)
+    return support_raw.group(0).strip() if support_raw else None
 
 def hash_artist(artist: str) -> str:
     ...
@@ -62,7 +73,13 @@ def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> s
         :param descr_contents: description contents
         :param debug_toggle: (default = 0) debug toggle for song name
     """
-    ...
+    caption = f"""
+    {get_orig_link(descr_name)=}
+    {get_label(descr_contents)=}
+    {get_catalogue(descr_contents)=}
+    {get_support_link(descr_contents)=}
+    """
+    return caption
 
 
 def get_metadata(description: str) -> List:
@@ -76,16 +93,16 @@ def _tests() -> None:
     """
         тестики от артеметры, не трогать
     """
-    name = "Ancient Methods - In Silence Die Selektion (In Stille Remix) [PS09]-nLHzYaELlRs.description"
-    with open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8") as f:
-        fin_prep = f.read()
+    # name = "Marco Bruno - Maverick [EVIGHET002]-Cz7sOjVyNIg.description"
+    # with open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8") as f:
+    #     fin_prep = f.read()
     
-    # dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
-    # name = dir_list[random.randint(0, 656)]
-    # description = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8")
-    # print("\n" + name)
+    dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
+    name = dir_list[random.randint(0, 656)]
+    fin_prep = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8").read()
+    print("\n" + name)
 
-    print("\n" + get_final_caption(name, fin_prep, 1) + "\n")
+    print(f"\n{get_final_caption(name, fin_prep, 1)}\n")
 
 
 
