@@ -103,7 +103,10 @@ def get_orig_link(name: str) -> str:
 def get_label(desc: str) -> str:
     #Label
     label_raw = re.search(r"(Label: )(.*)", desc)
+
     if label_raw == None or re.search(r"\d{7}_Records_DK"):
+        # removes label names from distrokid,
+        # as they are unique for each release and are useless
         return '-'
     label = label_raw.group(2).strip()
     label = re.sub(r'[\\/\(\)\[\]]', '', label)
@@ -118,9 +121,6 @@ def get_label(desc: str) -> str:
 def get_catalogue(name: str) -> str:
     #Catalogue
     catalogue_raw = re.search(r"\[(.+)\]", name)
-
-                            # removes label names from distrokid,
-                            # as they are unique for each release and are useless
     if catalogue_raw == None:
         return '-'
     catalogue = catalogue_raw.group(1).strip()

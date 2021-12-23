@@ -20,7 +20,7 @@ class Log():
             with open(self.file, 'a', encoding='utf-8') as f:
                 f.write(fmt)
         else:
-            with open(self.file, 'a', encoding='utf-8') as f:
+            with open(logfile, 'a', encoding='utf-8') as f:
                 f.write(fmt)
 
 logger_ = Log()

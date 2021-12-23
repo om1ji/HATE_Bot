@@ -1,7 +1,4 @@
-import re
-import yaml
 from bs4 import BeautifulSoup
-from collections.abc import Iterable
 
 from flask import Flask, request
 flask_app = Flask(__name__)
@@ -34,7 +31,7 @@ def webhook():
 
         db.push_to_queue(link, title, uploader)
 
-        l.log(f'Link "{link}" from inserted!')
+        l.log(f'Link {link} from {uploader} inserted!')
         return '200'
 
 if __name__ == '__main__':

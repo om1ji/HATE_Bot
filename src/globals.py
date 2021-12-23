@@ -2,8 +2,7 @@
 import yaml
 from pathlib import Path
 
-from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram import Client
 
 DIRECTION = Path(__file__).parent.parent.resolve()
 CONFIG = yaml.safe_load(open(Path(DIRECTION).joinpath("config.yml").resolve(), 'r'))

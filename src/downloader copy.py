@@ -6,13 +6,10 @@ import json
 import shutil
 import time
 from subprocess import PIPE, check_output, run
-import yaml
-
-from pyrogram import Client
 
 from ORM import SQL
 import regex_parser as reg
-from utils import Log, db_retry_until_unlocked as dbret, notify_admins
+from utils import Log, notify_admins
 from bot_stuff import bot
 from globals import *
 
