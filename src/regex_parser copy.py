@@ -1,9 +1,9 @@
+import enum
 import re
 import os
 import random
 from typing import List, Union
 
-#import utils
 """
     Важно! Отправлять аргумент в виде открытого и прочитанного файла
 """
@@ -23,11 +23,33 @@ _RE_YT_LINK = r'[a-zA-Z0-9_\-]{11}\.\.?description)$'
     ОЧЕНЬ ВАЖНО!! В аргумент функций artist, title и orig_link подаётся НАЗВАНИЕ описания, а не его содержимое
 """
 
+class UploadType(enum.Enum):
+    RELEASE = enum.auto
+    PODCAST = enum.auto
+    OTHER = enum.auto
+
 def get_album_title(desc: str) -> str:
     ...
 
-def get_upload_type(desc: str) -> int:
-    ...
+def get_upload_type(name: str, desc: str) -> UploadType:
+    podcast_check = all([
+        re.search(r"Hate Podcast", desc, re.I),
+        re.search(r"Downloads? and Tracklists?", desc, re.I),
+    ])
+    if podcast_check:
+        return UploadType.PODCAST
+    
+    release_check = all([
+        re.search(r"DISCLAIMER: ", desc),
+        re.search(r"Artists?: ", desc, re.I),
+        re.search(r" - ", name),
+        re.search(r"Title: ", desc, re.I),
+    ])
+    if release_check:
+        return UploadType.RELEASE
+    
+    return UploadType.OTHER
+    
 
 def get_podcast_info(desc: str) -> str:
     ...
@@ -36,7 +58,15 @@ def get_artist(name: str) -> str:
     ...
 
 def get_title(name: str) -> str:
-    ...
+    title_raw = \
+           re.search(r"(?: - )(.+)(?:\[)", name) \
+        or re.search(r"(?: - )(.+)(?:-[a-zA-Z0-9_\-]{11}\.\.?description)$", name)
+    
+    if not title_raw:
+        import utils
+        utils.notify_admins(f"Something went wrong in parsing the title! {name=}")
+        return "brubrhbrhbruubhbhu"
+    return title_raw.group(1).strip()
 
 def get_orig_link(name: str) -> str:
     return "https://youtu.be/" + \
@@ -73,13 +103,16 @@ def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> s
         :param descr_contents: description contents
         :param debug_toggle: (default = 0) debug toggle for song name
     """
-    caption = f"""
-    {get_orig_link(descr_name)=}
-    {get_label(descr_contents)=}
-    {get_catalogue(descr_contents)=}
-    {get_support_link(descr_contents)=}
-    """
-    return caption
+    type_ = get_upload_type(descr_name, descr_contents)
+    if type_ == UploadType.RELEASE:
+        caption = f"""
+        {get_orig_link(descr_name)=}
+        {get_label(descr_contents)=}
+        {get_catalogue(descr_contents)=}
+        {get_support_link(descr_contents)=}
+        """
+        return caption
+    
 
 
 def get_metadata(description: str) -> List:
