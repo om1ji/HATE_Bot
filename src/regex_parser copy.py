@@ -1,5 +1,10 @@
-import enum
+"""
+Parser module for extracting data about tracks
+from descriptions using regexes
+"""
+
 import re
+import enum
 import os
 import random
 from typing import List, Union
@@ -8,7 +13,7 @@ from typing import List, Union
     Важно! Отправлять аргумент в виде открытого и прочитанного файла
 """
 
-#### Compiling regexes
+# TODO: use newer regexes
 RE_ALBUM_TITLE = re.compile(r"(Title: )(.*)", re.I)
 RE_TYPE_PODCAST = re.compile(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', re.I)
 RE_TYPE_REGULAR = re.compile(r'(Artists?: |Title: |Label: |Genre: )', re.I)
@@ -17,19 +22,10 @@ RE_ARTIST = re.compile(r"(.+)(?: ?- )")
 RE_REMIX = re.compile(r"(?<=\()(.+)(?= Remix\))|(?<=\()(.+)(?= Edit\))")
 _RE_YT_LINK = r'[a-zA-Z0-9_\-]{11}\.\.?description)$'
 
-
-
-"""
-    ОЧЕНЬ ВАЖНО!! В аргумент функций artist, title и orig_link подаётся НАЗВАНИЕ описания, а не его содержимое
-"""
-
 class UploadType(enum.Enum):
     RELEASE = enum.auto
     PODCAST = enum.auto
     OTHER = enum.auto
-
-def get_album_title(desc: str) -> str:
-    ...
 
 def get_upload_type(name: str, desc: str) -> UploadType:
     podcast_check = all([
@@ -37,6 +33,7 @@ def get_upload_type(name: str, desc: str) -> UploadType:
         re.search(r"Downloads? and Tracklists?", desc, re.I),
     ])
     if podcast_check:
+        print(podcast_check)
         return UploadType.PODCAST
     
     release_check = all([
@@ -49,10 +46,11 @@ def get_upload_type(name: str, desc: str) -> UploadType:
         return UploadType.RELEASE
     
     return UploadType.OTHER
-    
 
 def get_podcast_info(desc: str) -> str:
-    ...
+    pod_info_raw = re.search(r"(.+)Follow #?HATE", desc, re.I, re.DOTALL)
+    if pod_info_raw:
+        return pod_info_raw.group(1).strip()
 
 def get_artist(name: str) -> str:
     ...
@@ -82,9 +80,19 @@ def get_label(desc: str) -> str:
     
     return label
 
-def get_catalogue(desc: str) -> Union[str, None]:
-    catalogue_raw = re.search(r"(Catalogu?e?: )(.+)", desc)
-    return catalogue_raw.group(2).strip() if catalogue_raw else None
+def get_catalogue(desc: str, name: str) -> Union[str, None]:
+    if (catalogue_raw := re.search(r"(?:Catalogu?e?: )(.+)", desc)):
+        return catalogue_raw.group(1).strip()
+    
+    # Try other variants:
+    if (catalogue_raw := re.search(r"\[(.+)\]", name)):
+        return catalogue_raw.group(1).strip()
+    
+    if (catalogue_raw := re.search(r"(?:Cat.+: )(.+)", name)):
+        # Clair - XS NRG [RR009]-2uBkNv5iH-I.description
+        return catalogue_raw.group(1).strip()
+    
+    return None
 
 def get_style(desc: str) -> str:
     ...
@@ -92,9 +100,6 @@ def get_style(desc: str) -> str:
 def get_support_link(desc: str) -> str:
     support_raw = re.search(r"https?:\/\/\S+", desc)
     return support_raw.group(0).strip() if support_raw else None
-
-def hash_artist(artist: str) -> str:
-    ...
 
 def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> str:
     """
@@ -104,36 +109,32 @@ def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> s
         :param debug_toggle: (default = 0) debug toggle for song name
     """
     type_ = get_upload_type(descr_name, descr_contents)
+    print(type_)
     if type_ == UploadType.RELEASE:
         caption = f"""
         {get_orig_link(descr_name)=}
         {get_label(descr_contents)=}
-        {get_catalogue(descr_contents)=}
+        {get_catalogue(descr_contents, descr_name)=}
         {get_support_link(descr_contents)=}
+        {get_title(descr_name)=}
         """
         return caption
-    
+    else:
+        raise NotImplementedError
 
-
-def get_metadata(description: str) -> List:
-    return [
-        get_artist(description),
-        get_title(description),
-        get_catalogue(description)
-    ]
 
 def _tests() -> None:
     """
         тестики от артеметры, не трогать
     """
-    # name = "Marco Bruno - Maverick [EVIGHET002]-Cz7sOjVyNIg.description"
-    # with open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8") as f:
-    #     fin_prep = f.read()
+    name = "Shlømo - HATE Podcast 240-1uAaiaa6Kr8..description"
+    with open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8") as f:
+        fin_prep = f.read()
     
-    dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
-    name = dir_list[random.randint(0, 656)]
-    fin_prep = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8").read()
-    print("\n" + name)
+    # dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
+    # name = dir_list[random.randint(0, 656)]
+    # fin_prep = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8").read()
+    # print("\n" + name)
 
     print(f"\n{get_final_caption(name, fin_prep, 1)}\n")
 
