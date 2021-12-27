@@ -13,7 +13,7 @@ from typing import List, Union
     Важно! Отправлять аргумент в виде открытого и прочитанного файла
 """
 
-# TODO: use newer regexes
+# TODO: use latest regexes
 RE_ALBUM_TITLE = re.compile(r"(Title: )(.*)", re.I)
 RE_TYPE_PODCAST = re.compile(r'(\d+ Hate Podcast with )(.+)\n|(\d+ Hate Podcast with )(.+) \n', re.I)
 RE_TYPE_REGULAR = re.compile(r'(Artists?: |Title: |Label: |Genre: )', re.I)
@@ -23,9 +23,16 @@ RE_REMIX = re.compile(r"(?<=\()(.+)(?= Remix\))|(?<=\()(.+)(?= Edit\))")
 _RE_YT_LINK = r'[a-zA-Z0-9_\-]{11}\.\.?description)$'
 
 class UploadType(enum.Enum):
-    RELEASE = enum.auto
-    PODCAST = enum.auto
-    OTHER = enum.auto
+    RELEASE = "release",
+    PODCAST = "podcast",
+    OTHER = "other"
+
+def multiple_or(*items):
+    """Equivalent to `i1 or i2 or i3 or ... or iN`"""
+    for item in items:
+        if item:
+            return item
+    return items[-1]
 
 def get_upload_type(name: str, desc: str) -> UploadType:
     podcast_check = all([
@@ -33,7 +40,6 @@ def get_upload_type(name: str, desc: str) -> UploadType:
         re.search(r"Downloads? and Tracklists?", desc, re.I),
     ])
     if podcast_check:
-        print(podcast_check)
         return UploadType.PODCAST
     
     release_check = all([
@@ -81,18 +87,12 @@ def get_label(desc: str) -> str:
     return label
 
 def get_catalogue(desc: str, name: str) -> Union[str, None]:
-    if (catalogue_raw := re.search(r"(?:Catalogu?e?: )(.+)", desc)):
-        return catalogue_raw.group(1).strip()
-    
-    # Try other variants:
-    if (catalogue_raw := re.search(r"\[(.+)\]", name)):
-        return catalogue_raw.group(1).strip()
-    
-    if (catalogue_raw := re.search(r"(?:Cat.+: )(.+)", name)):
-        # Clair - XS NRG [RR009]-2uBkNv5iH-I.description
-        return catalogue_raw.group(1).strip()
-    
-    return None
+    catalogue_raw = multiple_or(
+        re.search(r"(?:Catalogu?e?: )(.+)", desc),
+        re.search(r"\[(.+)\]", name),
+        re.search(r"(?:Cat.+: )(.+)", desc)
+    )
+    return catalogue_raw.group(1).strip() if catalogue_raw else None
 
 def get_style(desc: str) -> str:
     ...
@@ -109,7 +109,7 @@ def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> s
         :param debug_toggle: (default = 0) debug toggle for song name
     """
     type_ = get_upload_type(descr_name, descr_contents)
-    print(type_)
+    print(f"{type_=}")
     if type_ == UploadType.RELEASE:
         caption = f"""
         {get_orig_link(descr_name)=}
@@ -120,7 +120,7 @@ def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> s
         """
         return caption
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Support for non-release uploads is not yet implemented")
 
 
 def _tests() -> None:
