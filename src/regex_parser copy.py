@@ -5,9 +5,7 @@ from descriptions using regexes
 
 import re
 import enum
-import os
-import random
-from typing import List, Union
+from typing import List, TypeVar, Union
 
 """
     Важно! Отправлять аргумент в виде открытого и прочитанного файла
@@ -27,7 +25,8 @@ class UploadType(enum.Enum):
     PODCAST = "podcast",
     OTHER = "other"
 
-def multiple_or(*items):
+T = TypeVar('T')
+def multiple_or(*items: T) -> T:
     """Equivalent to `i1 or i2 or i3 or ... or iN`"""
     for item in items:
         if item:
@@ -44,8 +43,8 @@ def get_upload_type(name: str, desc: str) -> UploadType:
     
     release_check = all([
         re.search(r"DISCLAIMER: ", desc),
-        re.search(r"Artists?: ", desc, re.I),
-        re.search(r" - ", name),
+        re.search(r"Artists?: ?", desc, re.I),
+        re.search(r" ?- ", name),
         re.search(r"Title: ", desc, re.I),
     ])
     if release_check:
@@ -55,17 +54,19 @@ def get_upload_type(name: str, desc: str) -> UploadType:
 
 def get_podcast_info(desc: str) -> str:
     pod_info_raw = re.search(r"(.+)Follow #?HATE", desc, re.I, re.DOTALL)
-    if pod_info_raw:
-        return pod_info_raw.group(1).strip()
+    return pod_info_raw.group(1).strip()[:1024] if pod_info_raw else ""
 
-def get_artist(name: str) -> str:
+def get_metadata_artist(name: str) -> str:
+    return re.search(r"(.+)- ", name).group(1).strip()
+
+def get_hashtagged_artist(name: str) -> str:
     ...
 
 def get_title(name: str) -> str:
-    title_raw = \
-           re.search(r"(?: - )(.+)(?:\[)", name) \
-        or re.search(r"(?: - )(.+)(?:-[a-zA-Z0-9_\-]{11}\.\.?description)$", name)
-    
+    title_raw = multiple_or(
+        re.search(r"(?: - )(.+)(?:\[)", name),
+        re.search(r"(?: - )(.+)(?:-[a-zA-Z0-9_\-]{11}\.\.?description)$", name)
+    )
     if not title_raw:
         import utils
         utils.notify_admins(f"Something went wrong in parsing the title! {name=}")
@@ -94,29 +95,50 @@ def get_catalogue(desc: str, name: str) -> Union[str, None]:
     )
     return catalogue_raw.group(1).strip() if catalogue_raw else None
 
+_replacements = {
+    "Techmo": "Techno",
+    "Race": "Rave",
+    "Experimetnal": "Experimetnal",
+    "Dubtechno": "Dub",
+}
+def create_style_list(styles: str) -> List[str]:
+    # Remove already present hashtags
+    styles = styles.replace("#", "")
+    # Remove delimiters
+    styles = re.sub(r"[\/\|,\\\u200b]", "", styles)
+    style_list = list(set([l.strip() for l in styles.split()]))
+    style_list = [_replacements.get(st, st) for st in style_list]
+    return style_list
+
 def get_style(desc: str) -> str:
-    ...
+    style_raw = re.search(r"(?:Style: )(.+)", desc)
+    if not style_raw:
+        return "-"
+    styles = style_raw.group(1).strip()
+    style_list = create_style_list(styles)
+    return " ".join(["#"+s for s in style_list])
 
 def get_support_link(desc: str) -> str:
     support_raw = re.search(r"https?:\/\/\S+", desc)
     return support_raw.group(0).strip() if support_raw else None
 
-def get_final_caption(descr_name: str, descr_contents: str, debug_toggle=0) -> str:
+def get_final_caption(d_name: str, d_contents: str, debug_toggle=0) -> str:
     """
         Get final post caption
-        :param descr_name: name of description file
-        :param descr_contents: description contents
+        :param d_name: name of description file
+        :param d_contents: description contents
         :param debug_toggle: (default = 0) debug toggle for song name
     """
-    type_ = get_upload_type(descr_name, descr_contents)
-    print(f"{type_=}")
+    type_ = get_upload_type(d_name, d_contents)
     if type_ == UploadType.RELEASE:
         caption = f"""
-        {get_orig_link(descr_name)=}
-        {get_label(descr_contents)=}
-        {get_catalogue(descr_contents, descr_name)=}
-        {get_support_link(descr_contents)=}
-        {get_title(descr_name)=}
+        {get_orig_link(d_name)=}
+        {get_label(d_contents)=}
+        {get_catalogue(d_contents, d_name)=}
+        {get_support_link(d_contents)=}
+        {get_title(d_name)=}
+        {get_style(d_contents)=}
+        {get_metadata_artist(d_name)=}
         """
         return caption
     else:
@@ -127,14 +149,16 @@ def _tests() -> None:
     """
         тестики от артеметры, не трогать
     """
-    name = "Shlømo - HATE Podcast 240-1uAaiaa6Kr8..description"
-    with open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8") as f:
-        fin_prep = f.read()
+    import os
+    import random
+    # name = "CRAVO & VIL - Caxias [HYS004]-lISFmVUd1jA..description"
+    # with open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8") as f:
+    #     fin_prep = f.read()
     
-    # dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
-    # name = dir_list[random.randint(0, 656)]
-    # fin_prep = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8").read()
-    # print("\n" + name)
+    dir_list = os.listdir("D:\\test\\desc\\descriptions\\")
+    name = dir_list[random.randint(0, 656)]
+    fin_prep = open("D:\\test\\desc\\descriptions\\" + name, "r", encoding="utf-8").read()
+    print("\n" + name)
 
     print(f"\n{get_final_caption(name, fin_prep, 1)}\n")
 
