@@ -8,7 +8,7 @@ import time
 from subprocess import PIPE, check_output, run
 
 from ORM import SQL
-import regex_parser as reg
+import regex_parser_copy as reg
 from utils import Log, notify_admins
 from bot_stuff import bot
 from globals import *
@@ -22,27 +22,33 @@ db = SQL(QUEUE_DIR)
 l = Log(LOGFILE)
 
 def download_link(link: str):
+    # For debugging: if the result dir isn't empty, skip downloading
+    if os.listdir(RESULT_DIR):
+        l.log("///Skipping dowloading", 1)
+        return
+
     # Run downloading
     ytdl_result = run(f"""youtube-dl -x {link} \
-                          --audio-format mp3 --audio-quality 0 --no-part \
-                          --write-description -o "./tmp/%(id)s/%(title)s-%(id)s.%(ext)s" """,
-                          shell = True,
-                          stdout=PIPE,
-                          stderr=PIPE)
+                        --audio-format mp3 --audio-quality 0 --no-part \
+                        --write-thumbnail --write-description \
+                        -o "./tmp/%(id)s/%(title)s-%(id)s.%(ext)s" """,
+                        shell=True,
+                        stdout=PIPE,
+                        stderr=PIPE)
 
     ytdl_stdout = ytdl_result.stdout.decode('utf-8').strip()
     ytdl_stderr = ytdl_result.stderr.decode('utf-8').strip()
     # Removes '[download] ...' lines as they are repeated and flood the logs
     l.log("STDOUT: " + builtin_re.sub(r'\[download\]\s+\d*\.\d% of \d\.\d+.{3} at\s+\d+\.\d+.{3}\/s ETA \d+:\d+\n',
-                                       '', ytdl_stdout)
-              + "\nSTDERR: " + ytdl_stderr, 1)
+                                    '', ytdl_stdout)
+            + "\nSTDERR: " + ytdl_stderr, 1)
     # If the stderr of ytdl is not empty, notify the admins:
     if ytdl_stderr:
         notify_admins(f"!youtube-dl has encountered an error, stderr: {ytdl_stderr}")
 
     l.log("Downloading finished!", 1)
 
-def prepare_payload(current_link: str, folder, title, uploader):
+def prepare_payload_and_send(current_link: str, folder, title, uploader):
     """Prepares the payload"""
     os.chdir(folder)
     # Folder + shared basename for all the files in the folder
@@ -52,37 +58,42 @@ def prepare_payload(current_link: str, folder, title, uploader):
     with open(fbasename + '.description', 'r') as desc:
         read_track_descr = desc.read()
 
-    with open(fbasename + '.mp3', 'rb') as a:
-        audio = a
+        if not title:
+            title = check_output(f'youtube-dl -s -e {current_link}', shell=True).decode('utf-8').strip()
+        prepared_title = title + '-' + current_link[-11:] + '.description'
 
-    with open(fbasename + '.webp', 'rb') as t:
-        thumb = t
+        if not uploader:
+            uploader = json.loads(check_output(f'youtube-dl -s -J {current_link}', shell=True))['uploader']
+        
+        # caption = reg.get_final_caption(prepared_title, read_track_descr)
+        caption = ""
+        artist = reg.get_metadata_artist(prepared_title)
+        track_name = reg.get_title(prepared_title)
 
-    if not title:
-        title = check_output(f'youtube-dl -s -e {current_link}', shell=True).decode('utf-8').strip()
-    prepared_title = title + '-' + current_link[-11:] + '.description'
-
-    if not uploader:
-        uploader = json.loads(check_output(f'youtube-dl -s -J {current_link}', shell=True))['uploader']
-    
-    caption = reg.get_final_caption(prepared_title, read_track_descr)
-    artist = reg.get_artist(prepared_title)
-    track_name = reg.get_title(prepared_title)
-
-    return (audio, caption, artist, track_name, thumb)
-
-def post_audio(audio, caption, artist, track_name, thumb):
-    """Posts audio and logs it"""
-    msg = bot.send_audio(
-        CHAT_ID,
-        audio,
-        caption,
-        performer=artist,
-        title=track_name,
-        thumb=thumb
-    )
+    with open(fbasename + '.mp3', 'rb') as audio, \
+        open(fbasename + '.webp', 'rb') as thumb:
+        with bot:
+            msg = bot.send_audio(
+                CHAT_ID,
+                audio,
+                caption,
+                performer=artist,
+                title=track_name,
+                thumb=thumb
+            )
     l.log(f"Audio sent to the main channel! Message id: {msg.message_id}")
+        
 
+# def post_audio(audio, caption, artist, track_name, thumb):
+#     """Posts audio and logs it"""
+#     msg = bot.send_audio(
+#         CHAT_ID,
+#         audio,
+#         caption,
+#         performer=artist,
+#         title=track_name,
+#         thumb=thumb
+#     )
 def cleanup(folder, current_rowid) -> None:
     """Cleans up artifacts at the end of each cycle."""
     shutil.rmtree(folder)
@@ -92,12 +103,13 @@ def cleanup(folder, current_rowid) -> None:
 
 def main() -> None:
     """Entry point and main loop"""
-    l.log(f"====Running downloading on queue db: {db.name}====")
+    l.log(f"==== Running downloading on queue db: {db.name} ====")
     counter = 0
     _empty_check = False
     while True:
         os.chdir(DIRECTION)
         queue = db.fetch_queue()
+        print(f"{queue=}")
         # If the queue isn't empty, download the contents
         if not queue:
             if not _empty_check:
@@ -115,10 +127,12 @@ def main() -> None:
             # Path to the folder
             folder = RESULT_DIR + current_link[-11:] + '/'
             download_link(current_link)
-            post_audio(*prepare_payload(current_link, folder, title, uploader))
+            prepare_payload_and_send(current_link, folder, title, uploader)
             cleanup(folder, current_rowid)
             counter += 1
             l.log(f"=CYCLE {counter} FINISHED=", 1)
 
 if __name__ == '__main__':
     main()
+
+    #uwu

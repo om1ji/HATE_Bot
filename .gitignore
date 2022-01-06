@@ -1,4 +1,4 @@
-﻿__pycache__
+__pycache__
 *.db*
 test*.py
 tests/

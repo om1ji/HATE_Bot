@@ -6,7 +6,6 @@ idna==2.10
 itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
-pyTelegramBotAPI==3.7.6
 requests==2.25.1
 urllib3==1.26.4
 Werkzeug==1.0.1

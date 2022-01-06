@@ -10,6 +10,7 @@ from globals import *
 LOGFILE = DIRECTION + CONFIG['server_linux_logfile']
 QUEUE_DIR = DIRECTION + CONFIG['queue_name']
 db = SQL(QUEUE_DIR)
+db.create_table()
 l = Log(LOGFILE)
 #================================================================
 
@@ -25,15 +26,14 @@ def webhook():
     elif request.method == 'POST':
         data = request.data
         l.log(f"Incoming webhook with following data: {data}")
-        link = extract_by_name(data, "yt:videoId")
+        link = "https://youtube.com/watch?v=" + extract_by_name(data, "id")[9:]
         title = extract_by_name(data, "title")
         uploader = extract_by_name(data, "name")
 
-        db.push_to_queue(link, title, uploader)
+        db.push_to_queue(link, title, uploader) 
 
-        l.log(f'Link {link} from {uploader} inserted!')
+        l.log(f'Link {link} from {uploader} inserted! ({title})')
         return '200'
 
 if __name__ == '__main__':
-    db.create_table()
-    bot.run()
+    flask_app.run(debug=True, host="0.0.0.0", port=7777)
