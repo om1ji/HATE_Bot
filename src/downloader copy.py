@@ -27,7 +27,7 @@ def download_link(link: str):
         l.log("///Skipping dowloading", 1)
         return
 
-    # Run downloading
+    # Run downloading the video
     ytdl_stdout, ytdl_stderr = utils.run_cmd(
         f"""yt-dlp -x {link} \
         --audio-format mp3 --audio-quality 0 --no-part \
@@ -43,13 +43,19 @@ def download_link(link: str):
     if ytdl_stderr:
         utils.notify_admins(f"!youtube-dl has encountered an error, stderr: {ytdl_stderr}")
 
+    # # Download the thumbnail
+    # thumb_url = f"https://i.ytimg.com/vi_webp/{link[-11:]}/maxresdefault.webp"
+    # thumb_response = requests.get(thumb_url)
+    # with open(f"tmp/{link[-11:]}/maxresdefault.webp", "wb") as t:
+    #     t.write(thumb_response.content)
+
     l.log("Downloading finished!", 1)
 
 def prepare_payload(current_link: str, folder, title, uploader):
     """Prepares the payload"""
     os.chdir(folder)
     # Folder + shared basename for all the files in the folder
-    fbasename = folder + os.path.splitext(os.listdir()[0])[0]
+    fbasename = folder + os.path.splitext(os.listdir()[-1])[0]
     l.log(f"Folder: {folder}, path to .description file: {fbasename + '.description'}", 1)
 
     if not title:
@@ -78,6 +84,7 @@ def send(fbasename: str, caption, artist, track_name):
     with open(fbasename + '.mp3', 'rb') as audio, \
         open(fbasename + '.jpg', 'rb') as thumb:
         with bot:
+            os.chdir(DIRECTORY)
             msg = bot.send_audio(
                 CHAT_ID,
                 audio,

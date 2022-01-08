@@ -1,6 +1,8 @@
 from datetime import datetime
 import inspect
 from typing import Tuple
+
+from pyrogram.errors import PeerIdInvalid
 from globals import DIRECTORY, CONFIG, bot
 
 ADMINS = CONFIG['ADMINS']
@@ -39,7 +41,10 @@ def notify_admins(text: str) -> None:
     """
     with bot:
         for admin in ADMINS:
-            bot.send_message(admin, text)
+            try:
+                bot.send_message(admin, text)
+            except PeerIdInvalid:
+                logger_.log(f"Failed to send warning message to admin {admin}, skipping")
     logger_.log(text)
 
 def run_cmd(command: str) -> Tuple[str, str]:
