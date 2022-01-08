@@ -131,16 +131,25 @@ def get_final_caption(d_name: str, d_contents: str, debug_toggle=0) -> str:
     """
     type_ = get_upload_type(d_name, d_contents)
     if type_ == UploadType.RELEASE:
-        caption = f"""
-        {get_orig_link(d_name)=}
-        {get_label(d_contents)=}
-        {get_catalogue(d_contents, d_name)=}
-        {get_support_link(d_contents)=}
-        {get_title(d_name)=}
-        {get_style(d_contents)=}
-        {get_metadata_artist(d_name)=}
-        """
-        return caption
+        if debug_toggle:
+            caption = f"""
+            {get_orig_link(d_name)=}
+            {get_label(d_contents)=}
+            {get_catalogue(d_contents, d_name)=}
+            {get_support_link(d_contents)=}
+            {get_title(d_name)=}
+            {get_style(d_contents)=}
+            {get_metadata_artist(d_name)=}
+            """
+            return caption
+        else:
+            sup = f'<a href="{get_support_link(d_contents)}">Support</a>\n' if get_support_link(d_contents) else ""
+            caption = \
+            f"Catalogue: {get_catalogue(d_contents, d_name)}\n" \
+            + f"Style: {get_style(d_contents)}\n\n" \
+            + sup \
+            + f'<a href="{get_orig_link(d_name)}">Original Upload</a>' 
+            return caption
     else:
         raise NotImplementedError("Support for non-release uploads is not yet implemented")
 

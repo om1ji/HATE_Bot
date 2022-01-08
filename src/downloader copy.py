@@ -68,8 +68,8 @@ def prepare_payload(current_link: str, folder, title, uploader):
     with open(fbasename + '.description', 'r') as desc:
         read_track_descr = desc.read()
     
-    # caption = reg.get_final_caption(prepared_title, read_track_descr)
-    caption = ""
+    caption = reg.get_final_caption(prepared_title, read_track_descr)
+    # caption = ""
     artist = reg.get_metadata_artist(prepared_title)
     track_name = reg.get_title(prepared_title)
 
