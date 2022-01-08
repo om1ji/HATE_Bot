@@ -10,5 +10,6 @@ config.yml
 HATE/
 *.swp
 *.zip
+*.swo
 *.session*
 .vscode/

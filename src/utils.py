@@ -1,7 +1,6 @@
 from datetime import datetime
 import inspect
-from pathlib import Path
-
+from typing import Tuple
 from globals import *
 
 ADMINS = CONFIG['ADMINS']
@@ -38,9 +37,19 @@ def notify_admins(text: str) -> None:
     Notifies all admins with a text and logs it.
     :param text: text to send
     """
-    for admin in ADMINS:
-        bot.send_message(admin, text)
+    with bot:
+        for admin in ADMINS:
+            bot.send_message(admin, text)
     logger_.log(text)
+
+def run_cmd(command: str) -> Tuple[str, str]:
+    import subprocess as sp
+    cmd_result = sp.run(command, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+
+    return (
+        cmd_result.stdout.decode('utf-8').strip(),
+        cmd_result.stderr.decode('utf-8').strip(),
+    )
 
 if __name__ == '__main__':
     """Tests"""
