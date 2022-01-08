@@ -5,10 +5,10 @@ flask_app = Flask(__name__)
 
 from utils import Log
 from ORM import SQL
-from globals import *
+from globals import DIRECTORY, CONFIG
 
-LOGFILE = DIRECTION + CONFIG['server_linux_logfile']
-QUEUE_DIR = DIRECTION + CONFIG['queue_name']
+LOGFILE = DIRECTORY + CONFIG['server_linux_logfile']
+QUEUE_DIR = DIRECTORY + CONFIG['queue_name']
 db = SQL(QUEUE_DIR)
 db.create_table()
 l = Log(LOGFILE)

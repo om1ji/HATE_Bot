@@ -1,10 +1,10 @@
 from datetime import datetime
 import inspect
 from typing import Tuple
-from globals import *
+from globals import DIRECTORY, CONFIG, bot
 
 ADMINS = CONFIG['ADMINS']
-LOGFILE = DIRECTION + CONFIG['downloader_logfile']
+LOGFILE = DIRECTORY + CONFIG['downloader_logfile']
 
 class Log():
     def __init__(self, file: str = LOGFILE) -> None:
