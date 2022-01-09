@@ -12,10 +12,10 @@ API_ID: ""
 API_HASH: ""
 
 # Channel IDs, where MAIN_CHAT_ID is your main channel,
-# where all the final posts will be made, and 
-# TEMP_CHAT_ID is your temporary channel.
-MAIN_CHAT_ID: ""
-TEMP_CHAT_ID: ""
+# where all the final posts will be made
+# Consider inputting integer format id
+MAIN_CHAT_ID: 
+
 # Admin ids, used for reporting errors. At least 1 id is needed
 ADMINS:
   - ""
