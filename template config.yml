@@ -6,6 +6,11 @@
 DIRECTORY: ""
 # Your bot token, acquired through @BotFather
 TOKEN: ""
+
+# API id and hash required for Pyrogram launch, taken from my.telegram.org
+API_ID: ""
+API_HASH: ""
+
 # Channel IDs, where MAIN_CHAT_ID is your main channel,
 # where all the final posts will be made, and 
 # TEMP_CHAT_ID is your temporary channel.
@@ -34,6 +39,3 @@ server_linux_logfile: "server_linux-log.txt"
 # as usual. If skip_if_over_20mb is True, the bot will 
 # delete the folder and remove the link from the queue.
 skip_if_over_20mb: True
-
-# REGEXES:
-re_original_link: "([a-zA-Z0-9_-]{11})(?:\.\.?description)$"
