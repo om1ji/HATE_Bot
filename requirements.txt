@@ -13,4 +13,4 @@ pyrogram
 pillow
 beautifulsoup4
 tgcrypto
-yaml
+pyyaml
