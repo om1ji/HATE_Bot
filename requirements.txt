@@ -15,3 +15,4 @@ beautifulsoup4
 tgcrypto
 pyyaml
 lxml
+yt-dlp
