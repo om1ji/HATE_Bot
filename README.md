@@ -12,7 +12,7 @@
 
 ```apt-get install yt-dlp```
 
-```apt-get install python3-brotli``` for yt-dlp
+```apt-get install python3-brotli yt-dlp``` 
 
 ```pip install -r requitements.txt```
     - Если Linux, то ```pip3```
