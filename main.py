@@ -27,20 +27,21 @@ def metadata(title: str) -> str:
 def send(url): # Sends to defined channel/chat
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         data = ydl.sanitize_info(ydl.extract_info(url, download=False))
-        if data['duration'] < 1300: # Check if not Podcast, else skip
-            ydl.download(url) # Download file
-            artist, track_title = metadata(data['title'])
-            title = data["title"]
-            BOT.sendAudio(chat_id=CHANNEL_ID, 
-                        audio = open(title+".mp3", 'rb'),
-                        caption = f"""<a href="{data['original_url']}">Original upload</a>""",
-                        performer = artist,
-                        title = track_title, 
-                        thumb=open(title+".webp", 'rb'), 
-                        duration=data["duration"],
-                        parse_mode="HTML")
-            os.remove(title+".mp3")
-            os.remove(title+".webp")
+        if data['duration'] >= 1300: # Skip if the upload is a podcast
+            return        
+    ydl.download(url) # Download file
+    artist, track_title = metadata(data['title'])
+    title = data["title"]
+    BOT.sendAudio(chat_id=CHANNEL_ID, 
+                audio = open(title+".mp3", 'rb'),
+                caption = f"""<a href="{data['original_url']}">Original upload</a>""",
+                performer = artist,
+                title = track_title, 
+                thumb=open(title+".webp", 'rb'), 
+                duration=data["duration"],
+                parse_mode="HTML")
+    os.remove(title+".mp3")
+    os.remove(title+".webp")
 
 @FLASK_APP.route('/webhook', methods=['GET', 'POST'])
 def webhook():
