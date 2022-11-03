@@ -21,7 +21,7 @@ ydl_opts = {'format': "251",
         'outtmpl': './%(title)s.%(ext)s', "writethumbnail": True}
 
 def metadata(title: str) -> str:
-    r = re.search(r"(.+)(?: - )(.+)(?:\[)", title) # Get Artist name and Track name
+    r = re.search(r"(.+?)(?: - )(.+)(?:\[)", title) # Get Artist name and Track name
     return (r.group(1), r.group(2))
     
 def send(url): # Sends to defined channel/chat
