@@ -34,7 +34,7 @@ def send(url): # Sends to defined channel/chat
     title = data["title"]
     BOT.sendAudio(chat_id=CHANNEL_ID, 
                 audio = open(title+".mp3", 'rb'),
-                caption = f"""<a href="{data['original_url']}">Original upload</a>""",
+                caption = f"""<a href="{data['original_url'].strip()}">Original upload</a>""",
                 performer = artist,
                 title = track_title, 
                 thumb=open(title+".webp", 'rb'), 
